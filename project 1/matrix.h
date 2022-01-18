@@ -5,6 +5,7 @@
 //general libraries
 #include <stdlib.h>
 #include <assert.h>
+#include <iostream>
 
 // SIMD Instructions
 #include <xmmintrin.h>
@@ -16,20 +17,24 @@ public:
     fl_matrix(float** data, uint width, uint height);
     fl_matrix(uint width, uint height, bool fill_data);
 
-    uint get_num_rows();
-    uint get_num_columns();
+    uint get_num_rows() const;
+    uint get_num_columns() const;
 
-    const float* get_row(uint row);
-    const float* get_column(uint column);
+    const float* get_row(uint row) const;
+    const float* get_column(uint column) const;
 
     void set_row(float* row, uint row_loc);
     void set_column(float* column, uint column_loc);
+
+    friend std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix);
 
     uint num_rows;
     uint num_columns;
     float ** data;
 
 };
+
+
 
 
 fl_matrix fl_mult_matrix(fl_matrix a, fl_matrix b);
