@@ -1,36 +1,42 @@
 #include "matrix.h"
 
 
-
-struct fl_matrix fl_generate_matrix(uint width, uint height){
+fl_matrix::fl_matrix(uint width, uint height, bool fill_data){
     //set static seed for performance testing
     srand(0);
 
     //generate array to hold all of the columns
-    float ** data = (float**)calloc(width, sizeof(float*));
+    data = (float**)calloc(width, sizeof(float*));
 
     for(uint i = 0; i < width; i++){
         //generate row for each column
         float* column = (float*)calloc(height, sizeof(float));
 
-        for(uint i = 0; i < height; i++){
-            column[i] = (float)rand();
+        //if fill data then add random values
+        if(fill_data){
+            for(uint i = 0; i < height; i++){
+                column[i] = (float)rand();
+            }
         }
 
         //assign row to column
         data[i] = column;
     }
 
-    struct fl_matrix output_matrix;
-    output_matrix.num_columns = width;
-    output_matrix.num_rows = height;
-    output_matrix.data = data;
-    return output_matrix;
+    num_columns = width;
+    num_rows = height;
+}
+
+fl_matrix::fl_matrix(float** data, uint width, uint height){
+    data = data;
+    num_columns = width;
+    num_rows = height;
 }
 
 
-struct fl_matrix fl_mult_matrix(struct fl_matrix a, struct fl_matrix b) {
-    
+fl_matrix fl_mult_matrix(struct fl_matrix a, struct fl_matrix b) {
+    assert(a.num_columns == b.num_rows);
+
 
 }
 

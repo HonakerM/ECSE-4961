@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     float output = fl_dot_product((const float *)&in_1, (const float *)&in_2, 4);
     printf("%f\n",output);
 
-    struct fl_matrix matrix = fl_generate_matrix(2,2);
+    fl_matrix matrix = fl_matrix(2,2, true);
     printf("%f %f\n",matrix.data[0][0], matrix.data[1][0]);
     printf("%f %f\n",matrix.data[0][1], matrix.data[1][1]);
 
