@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     float output = fl_dot_product((const float *)&in_1, (const float *)&in_2, 4);
     printf("%f\n",output);
 
-    fl_matrix matrix = fl_matrix(2,2, true);
+    fl_matrix matrix = fl_matrix(10,10, true);
     std::cout << matrix;
 }
 

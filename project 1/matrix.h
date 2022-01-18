@@ -28,6 +28,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix);
 
+private:
     uint num_rows;
     uint num_columns;
     float ** data;

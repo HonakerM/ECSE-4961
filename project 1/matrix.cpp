@@ -45,7 +45,7 @@ std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix) {
     for(uint i = 0; i< matrix.get_num_rows(); i++){
 
         for(uint j =0; j< matrix.get_num_columns(); j++){
-            os << matrix.data[i][j] << " ";
+            os << matrix.data[j][i] << " ";
         }
 
         os << "\n";
@@ -57,7 +57,7 @@ std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix) {
 
 
 fl_matrix fl_mult_matrix(fl_matrix a, fl_matrix b) {
-    assert(a.num_columns == b.num_rows);
+    assert(a.get_num_columns() == b.get_num_rows());
 
 
 }
