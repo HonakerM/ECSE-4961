@@ -34,7 +34,29 @@ fl_matrix::fl_matrix(float** data, uint width, uint height){
 }
 
 
-fl_matrix fl_mult_matrix(struct fl_matrix a, struct fl_matrix b) {
+uint fl_matrix::get_num_rows() const {
+    return num_rows;
+}
+uint fl_matrix::get_num_columns() const{
+    return num_columns;
+}
+
+std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix) {
+    for(uint i = 0; i< matrix.get_num_rows(); i++){
+
+        for(uint j =0; j< matrix.get_num_columns(); j++){
+            os << matrix.data[i][j] << " ";
+        }
+
+        os << "\n";
+    }
+    return os;
+}
+
+
+
+
+fl_matrix fl_mult_matrix(fl_matrix a, fl_matrix b) {
     assert(a.num_columns == b.num_rows);
 
 

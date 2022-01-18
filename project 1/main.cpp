@@ -1,6 +1,7 @@
 // General Imports
 #include <stdint.h>
 #include <stdio.h>
+#include <iostream>
 
 //matrix imports
 #include "matrix.h"
@@ -14,8 +15,6 @@ int main(int argc, char *argv[])
     printf("%f\n",output);
 
     fl_matrix matrix = fl_matrix(2,2, true);
-    printf("%f %f\n",matrix.data[0][0], matrix.data[1][0]);
-    printf("%f %f\n",matrix.data[0][1], matrix.data[1][1]);
-
+    std::cout << matrix;
 }
 
