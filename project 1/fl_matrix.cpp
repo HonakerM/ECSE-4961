@@ -7,8 +7,8 @@ fl_matrix::fl_matrix(uint width, uint height, bool fill_data){
 
     //generate array to hold all of the columns
     //data = (float**)calloc(width, sizeof(float*));
-    data = new float*[width];
-    
+    data_column_primary = new float*[width];
+
     //for each column
     for(uint i = 0; i < width; i++){
         //generate array to hold each row for the column
@@ -25,8 +25,24 @@ fl_matrix::fl_matrix(uint width, uint height, bool fill_data){
         } 
 
         //assign row array to column
-        data[i] = column;
+        data_column_primary[i] = column;
+    }
 
+    data_row_primary = new float*[height];
+
+    //for each column
+    for(uint i = 0; i < height; i++){
+        //generate array to hold each row for the column
+        //float* column = (float*)calloc(height, sizeof(float));
+        float* row = new float[width];
+
+        //if fill data then add random values
+        for(uint j = 0; j < width; j++){
+            row[j] = data_column_primary[j][i];
+        } 
+
+        //assign row array to column
+        data_row_primary[i] = row;
     }
 
     //update class values
@@ -34,21 +50,20 @@ fl_matrix::fl_matrix(uint width, uint height, bool fill_data){
     num_rows = height;
 }
 
-fl_matrix::fl_matrix(float** data, uint width, uint height){
-    // set class values
-    data = data;
-    num_columns = width;
-    num_rows = height;
-}
-
 fl_matrix::~fl_matrix(){
     // clear all row arrays
     for(uint i = 0; i < get_num_columns(); i++){
-       delete[] data[i];
+       delete[] data_column_primary[i];
+    }
+
+    for(uint i = 0; i < get_num_rows(); i++){
+       delete[] data_row_primary[i];
     }
 
     // clear column array
-    delete[] data;
+    delete[] data_column_primary;
+    delete[] data_row_primary;
+
 }
 
 /*
@@ -64,19 +79,12 @@ uint fl_matrix::get_num_columns() const{
 
 const float* fl_matrix::get_row(uint row) const{
     //generate output row
-    float* output_row = new float[get_num_columns()];
-
-    //get value of row
-    for(uint i =0; i < get_num_columns(); i++){
-        output_row[i] = data[i][row];
-    }
-
-    return (const float*)output_row;
+    return data_row_primary[row];
 }
 
 
 const float* fl_matrix::get_column(uint column) const{
-    return data[column];
+    return data_column_primary[column];
 }
 
 
@@ -84,14 +92,15 @@ const float* fl_matrix::get_column(uint column) const{
  * Modifiers
  */
 void fl_matrix::set_cell(float value, uint row_loc, uint column_loc){
-    data[column_loc][row_loc] = value;
+    data_column_primary[column_loc][row_loc] = value;
+    data_row_primary[row_loc][column_loc] = value;
 }
 
 std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix) {
     for(uint i = 0; i< matrix.get_num_rows(); i++){
 
         for(uint j =0; j< matrix.get_num_columns(); j++){
-            os << (float)matrix.data[j][i] << " ";
+            os << (float)matrix.data_column_primary[j][i] << " ";
         }
 
         os << "\n";
@@ -117,9 +126,6 @@ fl_matrix* fl_simd_mult_matrix(fl_matrix* a, fl_matrix* b) {
             float value = fl_simd_dot_product(col, row, size);
 
             output->set_cell(value, i, j);
-
-            //get_row allocates space for new row which must be freed
-            delete[] row;
         }
     }
     
