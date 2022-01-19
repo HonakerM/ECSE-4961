@@ -17,7 +17,6 @@ public:
     /*
      * Constructors & Destructors
      */
-    fl_matrix(float** data, uint width, uint height);
     fl_matrix(uint width, uint height, bool fill_data);
     ~fl_matrix();
 
@@ -43,7 +42,8 @@ public:
 private:
     uint num_rows;
     uint num_columns;
-    float ** data;
+    float ** data_row_primary;
+    float ** data_column_primary;
 
 };
 
