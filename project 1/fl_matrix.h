@@ -33,8 +33,7 @@ public:
     /*
      * Modifierts
      */
-    void set_cell(float, uint row_loc, uint column_loc);
-
+    void set_cell(float value, uint row_loc, uint column_loc);
 
     /*
      * Operator
@@ -51,5 +50,5 @@ private:
 
 
 // function used to calculate the multiplication of matrix using SIMD instructions
-fl_matrix fl_simd_mult_matrix(fl_matrix a, fl_matrix b);
-float fl_simd_dot_product( const float* a, const float* b, int size);
+fl_matrix* fl_simd_mult_matrix(fl_matrix* a, fl_matrix* b);
+float fl_simd_dot_product( const float* a, const float* b, uint size);

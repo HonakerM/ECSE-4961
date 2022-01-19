@@ -6,19 +6,23 @@ fl_matrix::fl_matrix(uint width, uint height, bool fill_data){
     srand(0);
 
     //generate array to hold all of the columns
+    //data = (float**)calloc(width, sizeof(float*));
     data = new float*[width];
     
     //for each column
     for(uint i = 0; i < width; i++){
         //generate array to hold each row for the column
+        //float* column = (float*)calloc(height, sizeof(float));
         float* column = new float[height];
 
         //if fill data then add random values
-        if(fill_data){
-            for(uint i = 0; i < height; i++){
-                column[i] = (float)rand();
+        for(uint j = 0; j < height; j++){
+            if(fill_data){
+                column[j] = (float)rand();
+            } else {
+                column[j] = 0;
             }
-        }
+        } 
 
         //assign row array to column
         data[i] = column;
@@ -39,8 +43,8 @@ fl_matrix::fl_matrix(float** data, uint width, uint height){
 
 fl_matrix::~fl_matrix(){
     // clear all row arrays
-    for(uint i = 0; i < get_num_rows(); i++){
-        delete[] data[i];
+    for(uint i = 0; i < get_num_columns(); i++){
+       delete[] data[i];
     }
 
     // clear column array
@@ -55,18 +59,6 @@ uint fl_matrix::get_num_rows() const {
 }
 uint fl_matrix::get_num_columns() const{
     return num_columns;
-}
-
-std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix) {
-    for(uint i = 0; i< matrix.get_num_rows(); i++){
-
-        for(uint j =0; j< matrix.get_num_columns(); j++){
-            os << matrix.data[j][i] << " ";
-        }
-
-        os << "\n";
-    }
-    return os;
 }
 
 
@@ -88,19 +80,58 @@ const float* fl_matrix::get_column(uint column) const{
 }
 
 
-
-fl_matrix fl_simd_mult_matrix(fl_matrix a, fl_matrix b) {
-    assert(a.get_num_columns() == b.get_num_rows());
-
-    for(uint i = 0; i < a.get_num_columns(); i ++ ){
-    }
+/* 
+ * Modifiers
+ */
+void fl_matrix::set_cell(float value, uint row_loc, uint column_loc){
+    data[column_loc][row_loc] = value;
 }
 
-float fl_simd_dot_product( const float* a, const float* b, int size) {
+std::ostream& operator<<(std::ostream& os, const fl_matrix& matrix) {
+    for(uint i = 0; i< matrix.get_num_rows(); i++){
+
+        for(uint j =0; j< matrix.get_num_columns(); j++){
+            os << (float)matrix.data[j][i] << " ";
+        }
+
+        os << "\n";
+    }
+    return os;
+}
+
+
+
+
+fl_matrix* fl_simd_mult_matrix(fl_matrix* a, fl_matrix* b) {
+    assert(a->get_num_columns() == b->get_num_rows());
+    uint size = a->get_num_columns();
+
+    fl_matrix* output = new fl_matrix(10, 10, false); 
+
+    for(uint i = 0; i < a->get_num_rows(); i ++ ){
+        for(uint j = 0; j < b->get_num_columns(); j ++ ) {
+            const float* row = a->get_row(i);
+        
+            const float* col = b->get_column(j);
+
+            float value = fl_simd_dot_product(col, row, size);
+
+            output->set_cell(value, i, j);
+
+            //get_row allocates space for new row which must be freed
+            delete[] row;
+        }
+    }
+    
+
+    return output;
+}
+
+float fl_simd_dot_product( const float* a, const float* b, uint size) {
     // define output
     __m128 sum = _mm_setzero_ps();
 
-    for(int i=0; i< size; i += 4){
+    for(uint i=0; i< size / 4; i += 4){
         //load values into registers
 		const __m128 a_reg = _mm_loadu_ps( &a[i] );
 		const __m128 b_reg = _mm_loadu_ps( &b[i] );
