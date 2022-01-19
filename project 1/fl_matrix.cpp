@@ -106,7 +106,7 @@ fl_matrix* fl_simd_mult_matrix(fl_matrix* a, fl_matrix* b) {
     assert(a->get_num_columns() == b->get_num_rows());
     uint size = a->get_num_columns();
 
-    fl_matrix* output = new fl_matrix(10, 10, false); 
+    fl_matrix* output = new fl_matrix(a->get_num_rows(), b->get_num_columns(), false); 
 
     for(uint i = 0; i < a->get_num_rows(); i ++ ){
         for(uint j = 0; j < b->get_num_columns(); j ++ ) {
