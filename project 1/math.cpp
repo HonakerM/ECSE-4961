@@ -4,6 +4,9 @@ matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b) {
     assert(a->get_num_columns() == b->get_num_rows());
     uint size = a->get_num_columns();
 
+    a->set_data_ordering(ROW_MAJOR);
+    b->set_data_ordering(COL_MAJOR);
+
     matrix<float>* output = new matrix<float>(a->get_num_rows(), b->get_num_columns(), false); 
 
 
@@ -16,6 +19,8 @@ matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b) {
             float value = fl_simd_dot_product(col, row, size);
 
             output->set_cell(value, i, j);
+
+            delete[] row;
         }
     }
     

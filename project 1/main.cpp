@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     float output = fl_simd_dot_product((const float *)&in_1, (const float *)&in_2, 3);
     printf("%f\n",output);
     */
-    
+
     uint matrix_size;
     if(argc < 2){
         std::cout << "Setting Matrix size to 10. To set custom size run ./main.o [matrix_size]" << std::endl;
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     auto end_time = std::chrono::high_resolution_clock::now();
     
     std::cout << "Finished Multiplication" << std::endl;
-    std::cout << "Total Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_time-start_time)).count() << "ms" << std::endl;
+    std::cout << "Total Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_time-start_time)).count() << "μs" << std::endl;
 
     delete output_mult;
 }
