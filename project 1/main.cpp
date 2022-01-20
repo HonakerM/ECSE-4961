@@ -4,9 +4,9 @@
 #include <iostream>
 
 //matrix imports
-#include "fl_matrix.h"
+#include "matrix.h"
+#include "math.h"
 
-fl_matrix* fl_test(fl_matrix* a, fl_matrix* b);
 
 int main(int argc, char *argv[])
 {   
@@ -19,12 +19,12 @@ int main(int argc, char *argv[])
     
     */
 
-    fl_matrix matrix_a = fl_matrix(1000,1000, true);
+    matrix<float> matrix_a = matrix<float>(1000,1000, true);
 
-    fl_matrix matrix_b = fl_matrix(1000, 1000, true);
+    matrix<float> matrix_b = matrix<float>(1000, 1000, true);
 
     std::cout << "Finished Geneation" << std::endl;
-    fl_matrix* output_mult = fl_simd_mult_matrix(&matrix_a, &matrix_b);
+    matrix<float>* output_mult = fl_simd_mult_matrix(&matrix_a, &matrix_b);
 
     std::cout << "Finished Multiplication" << std::endl;
     delete output_mult;
