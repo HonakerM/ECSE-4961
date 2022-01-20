@@ -7,11 +7,13 @@ matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b) {
     a->set_data_ordering(ROW_MAJOR);
     b->set_data_ordering(COL_MAJOR);
 
+
+
     matrix<float>* output = new matrix<float>(a->get_num_rows(), b->get_num_columns(), false); 
 
 
-    for(uint i = 0; i < a->get_num_rows(); i ++ ){
-        for(uint j = 0; j < b->get_num_columns(); j ++ ) {
+    for(uint i = 0; i < size; i ++ ){
+        for(uint j = 0; j < size; j ++ ) {
             const float* row = a->get_row(i);
         
             const float* col = b->get_column(j);
@@ -19,8 +21,6 @@ matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b) {
             float value = fl_simd_dot_product(col, row, size);
 
             output->set_cell(value, i, j);
-
-            delete[] row;
         }
     }
     
