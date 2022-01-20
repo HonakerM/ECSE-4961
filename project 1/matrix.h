@@ -41,7 +41,7 @@ public:
     /*
      * Operator
      */
-    friend std::ostream& operator<<(std::ostream& os, const matrix<T>& matrix);
+    template<class U> friend std::ostream& operator<<(std::ostream& os, const matrix<U>& matrix);
 
 private:
     uint num_rows;
@@ -58,9 +58,6 @@ private:
  * Implementation
  */
 template <typename T> matrix<T>::matrix(uint width, uint height, bool fill_data){
-    //set static seed for performance testing
-    srand(0);
-
     //generate array to hold all of the columns
     data_column_primary = new T*[width];
 
@@ -72,7 +69,8 @@ template <typename T> matrix<T>::matrix(uint width, uint height, bool fill_data)
         //if fill data then add random values
         for(uint j = 0; j < height; j++){
             if(fill_data){
-                column[j] = (T)rand();
+                column[j] = j+1;
+                //column[j] = (T)rand();
             } else {
                 column[j] = 0;
             }
@@ -136,7 +134,6 @@ template <typename T> uint matrix<T>::get_num_columns() const{
 
 
 template <typename T> const T* matrix<T>::get_row(uint row) const{
-    //generate output row
     return data_row_primary[row];
 }
 
