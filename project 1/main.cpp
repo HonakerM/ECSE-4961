@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <iostream>
+#include <chrono>
 
 //matrix imports
 #include "matrix.h"
@@ -13,23 +14,36 @@ int main(int argc, char *argv[])
     //set static seed for performance testing
     srand(0);
 
-  
+    /*
     const float in_1[3] = {1,2,3};
     const float in_2[3] = {1,2,3};
 
     float output = fl_simd_dot_product((const float *)&in_1, (const float *)&in_2, 3);
     printf("%f\n",output);
+    */
     
- 
-    matrix<float> matrix_a = matrix<float>(10,10, true);
-    matrix<float> matrix_b = matrix<float>(10,10, true);
+    uint matrix_size;
+    if(argc < 2){
+        std::cout << "Setting Matrix size to 10. To set custom size run ./main.o [matrix_size]" << std::endl;
+        matrix_size = 10;
+    } else {
+        matrix_size = std::stoi(argv[1]);
+    }
 
-    std::cout << "Finished Geneation" << std::endl;
-    std::cout<< matrix_a <<std::endl;
-    std::cout<< matrix_b <<std::endl;
+
+    std::cout << "Started Geneation" << std::endl;
+    
+    matrix<float> matrix_a = matrix<float>(matrix_size, matrix_size, true);
+    matrix<float> matrix_b = matrix<float>(matrix_size, matrix_size, true);
+
+    std::cout << "Finished Geneation & Started Multiplication" << std::endl;
+
+    auto start_time = std::chrono::high_resolution_clock::now();
     matrix<float>* output_mult = fl_simd_mult_matrix(&matrix_a, &matrix_b);
-
+    auto end_time = std::chrono::high_resolution_clock::now();
+    
     std::cout << "Finished Multiplication" << std::endl;
-    std::cout << *output_mult;
+    std::cout << "Total Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_time-start_time)).count() << "ms" << std::endl;
+
     delete output_mult;
 }
