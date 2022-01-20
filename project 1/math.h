@@ -1,4 +1,5 @@
 #include "matrix.h"
+#include <cstring>
 
 // function used to calculate the multiplication of matrix using SIMD instructions
 matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b);
