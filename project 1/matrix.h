@@ -38,8 +38,9 @@ public:
     /*
      * Accessors
      */
-    uint get_num_rows() const;
-    uint get_num_columns() const;
+    uint get_num_rows() const { return num_rows;}
+    uint get_num_columns() const { return num_columns;}
+    uint get_ordering() const { return data_order;}
 
     const T get_cell(uint row, uint column) const;
     const T* get_row(uint row) const;
@@ -117,13 +118,6 @@ template <typename T> void matrix<T>::free_matrix() {
 /*
  * Accessors
  */
-template <typename T> uint matrix<T>::get_num_rows() const {
-    return num_rows;
-}
-template <typename T> uint matrix<T>::get_num_columns() const{
-    return num_columns;
-}
-
 
 template <typename T> const T matrix<T>::get_cell(uint row, uint column) const {
     // if data order is row major
@@ -190,8 +184,8 @@ template <typename T> void matrix<T>::set_cell(T value, uint row_loc, uint colum
 }
 template <typename T> void matrix<T>::set_data_ordering(uint order){
     //bounds checking
-    if(order != ROW_MAJOR || order != COL_MAJOR){
-        return;
+    if(order != ROW_MAJOR && order != COL_MAJOR){
+        return ;
     }
 
     //if order is already correct
@@ -242,6 +236,8 @@ template <typename T> void matrix<T>::set_data_ordering(uint order){
         free_matrix();
         data = new_data;
     }
+
+    data_order = order;
 }
 
 template <typename T> std::ostream& operator<<(std::ostream& os, const matrix<T>& matrix) {
