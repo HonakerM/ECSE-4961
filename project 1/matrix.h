@@ -95,8 +95,9 @@ template <typename T> matrix<T>::matrix(uint width, uint height, bool fill_data)
         for(uint j = 0; j < height+height_size_adjust; j++){
             //if still within the bounds of the matrix
             if(fill_data && j<height && i<width){
-                column[j] = j;
-                ///column[j] = (T)rand();
+                
+                //column[j] = j;
+                column[j] = (T)rand();
 
             //else pad 0s
             } else {

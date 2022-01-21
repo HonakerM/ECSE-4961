@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     */
    
 
+
     uint matrix_size;
     if(argc < 2){
         std::cout << "Setting Matrix size to 10. To set custom size run ./main.o [matrix_size]" << std::endl;
@@ -38,8 +39,6 @@ int main(int argc, char *argv[])
     matrix<float> matrix_b = matrix<float>(matrix_size, matrix_size, true);
 
     std::cout << "Finished Geneation & Started Multiplication" << std::endl;
-    matrix_a.set_data_ordering(ROW_MAJOR);
-    matrix_b.set_data_ordering(COL_MAJOR);
 
     auto start_time = std::chrono::high_resolution_clock::now();
     matrix<float>* output_mult = fl_simd_mult_matrix(&matrix_a, &matrix_b);
