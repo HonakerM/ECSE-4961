@@ -10,10 +10,6 @@
 #include <assert.h>
 #include <iostream>
 
-// SIMD Instructions
-#include <xmmintrin.h>
-#include <smmintrin.h>
-
 // define matrix organization macros
 // this determines weather a matrix is 
 // stored by rows or columns. This
@@ -63,6 +59,7 @@ private:
 
     // 
     T ** data;
+
     // default to column major
     uint data_order = COL_MAJOR;
 
@@ -73,22 +70,38 @@ private:
  * Implementation
  */
 template <typename T> matrix<T>::matrix(uint width, uint height, bool fill_data){
+    // generate padding required for a matrix devisible by 4
+    // this is required for and sse or avx instructions
+    uint width_size_adjust = 0; 
+    if(width % 4 != 0) {
+        width_size_adjust = 4 - (width % 4);
+    }
+
+    uint height_size_adjust = 0; 
+    if(height % 4 != 0) {
+        height_size_adjust = 4 - (height % 4);
+    }
+
+
     //generate array to hold all of the columns
-    data = new T*[width];
+    data = new T*[width + width_size_adjust];
 
     //for each column
-    for(uint i = 0; i < width; i++){
+    for(uint i = 0; i < width+width_size_adjust; i++){
         //generate array to hold each row for the column
-        T* column = new T[height];
+        T* column = new T[height+height_size_adjust];
 
         //if fill data then add random values
-        for(uint j = 0; j < height; j++){
-            if(fill_data){
-                column[j] = j+1;
-                //column[j] = (T)rand();
+        for(uint j = 0; j < height+height_size_adjust; j++){
+            //if still within the bounds of the matrix
+            if(fill_data && j<height && i<width){
+                column[j] = (T)rand();
+
+            //else pad 0s
             } else {
                 column[j] = 0;
             }
+
         } 
 
         //assign column array to location
