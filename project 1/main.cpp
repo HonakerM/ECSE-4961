@@ -14,11 +14,15 @@ int main(int argc, char *argv[])
     //set static seed for performance testing
     srand(0);
 
+    /*
+    test floating point
     const float in_1[8] = {1,2,3,0,0,0,0,0};
     const float in_2[8] = {1,2,3,0,0,0,0,0};
 
     float output = fl_simd_dot_product((const float *)&in_1, (const float *)&in_2, 8);
     printf("%f\n",output);
+    */
+
 
     uint matrix_size;
     if(argc < 2){
@@ -35,8 +39,6 @@ int main(int argc, char *argv[])
     matrix<float> matrix_b = matrix<float>(matrix_size, matrix_size, true);
 
     std::cout << "Finished Geneation & Started Multiplication" << std::endl;
-    matrix_a.set_data_ordering(ROW_MAJOR);
-    matrix_b.set_data_ordering(COL_MAJOR);
 
     auto start_time = std::chrono::high_resolution_clock::now();
     matrix<float>* output_mult = fl_simd_mult_matrix(&matrix_a, &matrix_b);
