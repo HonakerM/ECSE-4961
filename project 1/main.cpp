@@ -14,13 +14,11 @@ int main(int argc, char *argv[])
     //set static seed for performance testing
     srand(0);
 
-    /*
-    const float in_1[3] = {1,2,3};
-    const float in_2[3] = {1,2,3};
+    const float in_1[8] = {1,2,3,0,0,0,0,0};
+    const float in_2[8] = {1,2,3,0,0,0,0,0};
 
-    float output = fl_simd_dot_product((const float *)&in_1, (const float *)&in_2, 3);
+    float output = fl_simd_dot_product((const float *)&in_1, (const float *)&in_2, 8);
     printf("%f\n",output);
-    */
 
     uint matrix_size;
     if(argc < 2){
