@@ -15,12 +15,13 @@ int main(int argc, char *argv[])
     srand(0);
 
     /*
-    const float in_1[3] = {1,2,3};
-    const float in_2[3] = {1,2,3};
+    const float in_1[16] = {1,2,3,0,0,0,0,0,1,2,3,0,0,0,0,0};
+    const float in_2[16] = {1,2,3,0,0,0,0,0,1,2,3,0,0,0,0,0};
 
-    float output = fl_simd_dot_product((const float *)&in_1, (const float *)&in_2, 3);
+    float output = fl_dot_product((const float *)&in_1, (const float *)&in_2, 16);
     printf("%f\n",output);
     */
+   
 
     uint matrix_size;
     if(argc < 2){
@@ -46,6 +47,8 @@ int main(int argc, char *argv[])
     
     std::cout << "Finished Multiplication" << std::endl;
     std::cout << "Total Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_time-start_time)).count() << "μs" << std::endl;
-
+    
+    
     delete output_mult;
+     
 }
