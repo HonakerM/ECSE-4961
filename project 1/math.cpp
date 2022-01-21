@@ -38,7 +38,7 @@ float fl_dot_product( const float* a, const float* b, uint size) {
         __m256 b_reg = _mm256_loadu_ps( &b[i] );
          
         //compute the dotproduct and add it to the accumulator
-        const __m128 dp = simd_dp(a_reg, b_reg);
+        const __m128 dp = simd_dp(&a_reg, &b_reg);
 
 		sum = _mm_add_ps( sum , dp );
     }
@@ -48,9 +48,10 @@ float fl_dot_product( const float* a, const float* b, uint size) {
 }
 
 
-const __m128 simd_dp(__m256 a, __m256 b){
-
-    return  _mm256_castps256_ps128(_mm256_dp_ps( a, b, 0xFF ));
+const __m128 simd_dp(__m256* a, __m256* b){
+    // only return the lower 4 elements
+    // as each element is the same value 
+    return  _mm256_castps256_ps128(_mm256_dp_ps( *a, *b, 0xFF ));
     /*
     __m256 xy = _mm256_mul_ps(a, b);
 
@@ -61,13 +62,13 @@ const __m128 simd_dp(__m256 a, __m256 b){
     __m128 dotproduct = _mm_add_ps(sum1, swapped);
     return dotproduct;
    
-
-        
-    __m256 xy = _mm256_mul_ps( a, b );
+    
+    
+    __m256 xy = _mm256_mul_ps( *a, *b );
     __m256 temp = _mm256_hadd_ps( xy, xy );
     __m128 hi128 = _mm256_extractf128_ps( temp, 1 );
     return _mm_add_ps( _mm256_castps256_ps128(temp), hi128 );
-
+ 
 
     // while the simpilest method would be to use 
     // _mm256_dp_ps ; however, it is not the fastst
