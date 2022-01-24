@@ -13,7 +13,7 @@ g++ -Wall -g *.cpp -o main.o -msse4.1 -mavx
 ```
 
 ### Running
-Once compiled the default tests can be executed by running `./main.o`
+Once compiled the multiplicatino can be executed by running `./main.o <size_of_matrix>`
 
 
 ## Structure 
@@ -61,3 +61,8 @@ When optimizing cache it is most important to look at the cache rate. I utilized
 |-------------|--------------------------------------------|-------------------------------------------|
 | 1000        | 1.7% Miss rate (2.2% read and 0.1% write)  | 0.6% Miss Rate (0.7% read and 0.2% write) |
 | 10000       |                                            |                                           |
+
+
+### C++ Optimization
+
+For fun testing we decided to test how well `g++` will optimize the code. We ran the same build but with the `-Ofast` option which will make `g++` spend more time optimizing calls to try to speed up the application. As the below table shows this
