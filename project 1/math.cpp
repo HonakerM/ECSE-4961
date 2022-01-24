@@ -1,6 +1,6 @@
 #include "math.h"
 
-matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b) {
+matrix<float>* fl_mult_matrix(matrix<float>* a, matrix<float>* b, float (*dot_product)( const float*, const float*, uint)) {
     //assert that multiplication can happen
     assert(a->get_num_columns() == b->get_num_rows());
 
@@ -21,7 +21,7 @@ matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b) {
         
             const float* col = b->get_column(j);
 
-            float value = fl_dot_product(col, row, size+size_adjust);
+            float value = dot_product(col, row, size+size_adjust);
 
             output->set_cell(value, i, j);
         }
@@ -31,7 +31,7 @@ matrix<float>* fl_simd_mult_matrix(matrix<float>* a, matrix<float>* b) {
     return output;
 }
 
-float fl_dot_product( const float* a, const float* b, uint size) {
+float fl_simd_dot_product( const float* a, const float* b, uint size) {
     // define output
     __m128 sum = _mm_setzero_ps();
 
@@ -55,3 +55,13 @@ float fl_dot_product( const float* a, const float* b, uint size) {
     return _mm_cvtss_f32( sum );
 }
 
+
+float fl_sisd_dot_product( const float* a, const float* b, uint size) {
+    float sum = 0;
+
+    for(uint i=0; i<size; i++){
+        sum += a[i] * b[i];
+    }
+
+    return sum;
+}
