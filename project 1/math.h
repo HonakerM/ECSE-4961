@@ -1,4 +1,5 @@
 #include "matrix.h"
+#include "main.h"
 #include <cstring>
 
 
@@ -8,10 +9,7 @@
 #include <emmintrin.h>
 #include <smmintrin.h>
 
-//define batch length
-// 4 for sse
-// 8 for avx
-#define SIMD_BATCH_SIZE 8
+
 
 // function used to calculate the multiplication of matrix using SIMD instructions
 float simd_dot_product( const float* a, const float* b, uint size);
@@ -26,7 +24,10 @@ template<class MATRIX_TYPE> matrix<MATRIX_TYPE>* mult_matrix(matrix<MATRIX_TYPE>
 
     //get size and size adjust
     uint size = a->get_num_columns();
-    uint size_adjust = SIMD_BATCH_SIZE - (size % SIMD_BATCH_SIZE);
+    uint size_adjust = 0;
+    if(size % SIMD_BATCH_SIZE != 0){
+        size_adjust = SIMD_BATCH_SIZE - (size % SIMD_BATCH_SIZE);
+    }
 
 #ifdef CACHE_OPTIMIZATION
     a->set_data_ordering(ROW_MAJOR);
@@ -47,7 +48,7 @@ template<class MATRIX_TYPE> matrix<MATRIX_TYPE>* mult_matrix(matrix<MATRIX_TYPE>
             if(simd){
                 value = simd_dot_product(col, row, size+size_adjust);
             } else {
-                value = sisd_dot_product(col,row, size+size_adjust);
+                value = sisd_dot_product(col, row, size+size_adjust);
             }
 
             output->set_cell(value, i, j);
