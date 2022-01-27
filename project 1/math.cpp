@@ -1,39 +1,8 @@
 #include "math.h"
 
-matrix<float>* fl_mult_matrix(matrix<float>* a, matrix<float>* b, float (*dot_product)( const float*, const float*, uint)) {
-    //assert that multiplication can happen
-    assert(a->get_num_columns() == b->get_num_rows());
-
-    //get size and size adjust
-    uint size = a->get_num_columns();
-    uint size_adjust = SIMD_BATCH_SIZE - (size % SIMD_BATCH_SIZE);
-
-#ifdef CACHE_OPTIMIZATION
-    a->set_data_ordering(ROW_MAJOR);
-    b->set_data_ordering(COL_MAJOR);
-#endif
-
-    matrix<float>* output = new matrix<float>(a->get_num_rows(), b->get_num_columns(), false); 
 
 
-    for(uint i = 0; i < size; i ++ ){
-        const float* row = a->get_row(i);
-
-        for(uint j = 0; j < size; j ++ ) {
-        
-            const float* col = b->get_column(j);
-
-            float value = dot_product(col, row, size+size_adjust);
-
-            output->set_cell(value, i, j);
-        }
-    }
-    
-
-    return output;
-}
-
-float fl_simd_dot_product( const float* a, const float* b, uint size) {
+float simd_dot_product( const float* a, const float* b, uint size) {
     // define output
     __m128 sum = _mm_setzero_ps();
 
@@ -58,8 +27,50 @@ float fl_simd_dot_product( const float* a, const float* b, uint size) {
 }
 
 
-float fl_sisd_dot_product( const float* a, const float* b, uint size) {
+float sisd_dot_product( const float* a, const float* b, uint size) {
     float sum = 0;
+
+    for(uint i=0; i<size; i++){
+        sum += a[i] * b[i];
+    }
+
+    return sum;
+}
+
+
+int simd_dot_product( const int* a, const int* b, uint size){
+    // define output
+    __m128i sum = _mm_setzero_si128();
+
+    for(uint i=0; i < size / SIMD_BATCH_SIZE; i += SIMD_BATCH_SIZE){
+        
+        __m128i a_reg;
+        __m128i b_reg;
+
+        //load values into registers
+        a_reg = _mm_loadu_si128   ( (const __m128i_u*)&a[i] );
+        b_reg = _mm_loadu_si128  ( (const __m128i_u*)&b[i] );
+         
+        //compute the dotproduct
+        // only return the lower 4 elements
+        // as each element is the same value 
+        //const __m128i dp = ;
+        __m128i temp_var = _mm_mullo_epi32(a_reg, b_reg);
+        temp_var  =_mm_hadd_epi16(temp_var, temp_var);
+        temp_var  =_mm_hadd_epi16(temp_var, temp_var);
+        temp_var  =_mm_hadd_epi16(temp_var, temp_var);
+
+
+		sum = _mm_add_epi16 ( sum , temp_var );
+    }
+
+    //get the lowest 32 bytes of the sum and then cast to just the lower 16
+    return _mm_cvtsi128_si32 ( sum ) & 0x00FF;
+}
+
+
+int sisd_dot_product( const int* a, const int* b, uint size){
+    int sum = 0;
 
     for(uint i=0; i<size; i++){
         sum += a[i] * b[i];
