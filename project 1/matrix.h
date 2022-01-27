@@ -11,6 +11,9 @@
 #include <iostream>
 
 
+//local includes to include SIMD_BATCH_SIZE
+#include "main.h"
+
 // define matrix organization macros
 // this determines weather a matrix is 
 // stored by rows or columns. This
@@ -23,7 +26,7 @@
 
 // this macro defines the epsilon for float
 // comparison. 
-#define MATRIX_COMPARISON_EPSILON 0.1
+#define MATRIX_COMPARISON_EPSILON 1000
 
 //template matrix class
 template <typename T>
@@ -76,16 +79,16 @@ private:
  * Implementation
  */
 template <typename T> matrix<T>::matrix(uint width, uint height, bool fill_data){
-    // generate padding required for a matrix devisible by 4
+    // generate padding required for a matrix devisible by 8
     // this is required for and sse or avx instructions
     uint width_size_adjust = 0; 
-    if(width % 4 != 0) {
-        width_size_adjust = 4 - (width % 4);
+    if(width % 8 != 0) {
+        width_size_adjust = 8 - (width % 8);
     }
 
     uint height_size_adjust = 0; 
-    if(height % 4 != 0) {
-        height_size_adjust = 4 - (height % 4);
+    if(height % 8 != 0) {
+        height_size_adjust = 8 - (height % 8);
     }
 
 
@@ -93,17 +96,17 @@ template <typename T> matrix<T>::matrix(uint width, uint height, bool fill_data)
     data = new T*[width + width_size_adjust];
 
     //for each column
-    for(uint i = 0; i < width+width_size_adjust; i++){
+    for(uint i = 0; i < width + width_size_adjust; i++){
         //generate array to hold each row for the column
-        T* column = new T[height+height_size_adjust];
+        T* column = new T[height + height_size_adjust];
 
         //if fill data then add random values
-        for(uint j = 0; j < height+height_size_adjust; j++){
+        for(uint j = 0; j < height + height_size_adjust; j++){
             //if still within the bounds of the matrix
-            if(fill_data && j<height && i<width){
+            if(fill_data && j < height && i < width){
                 
-                column[j] = j;
-                //column[j] = (T)rand();
+                //column[j] = j;
+                column[j] = (T)rand();
 
             //else pad 0s
             } else {
@@ -127,8 +130,13 @@ template <typename T>  matrix<T>::~matrix(){
 }
 
 template <typename T> void matrix<T>::free_matrix() {
+    uint size_adjust = 0; 
+    if(get_num_columns() % 8 != 0) {
+        size_adjust = 8 - (get_num_columns() % 8);
+    }
+
     // free all of the column arrays
-    for(uint i = 0; i < get_num_columns(); i++){
+    for(uint i = 0; i < get_num_columns()+size_adjust; i++){
        delete[] data[i];
     }
 
@@ -214,18 +222,35 @@ template <typename T> void matrix<T>::set_data_ordering(uint order){
         return;
     }
 
+    // generate padding required for a matrix devisible by 4
+    // this is required for and sse or avx instructions
+    uint width_size_adjust = 0; 
+    if(get_num_columns() % 8 != 0) {
+        width_size_adjust = 8 - (get_num_columns() % 8);
+    }
+
+    uint height_size_adjust = 0; 
+    if(get_num_rows() % 8 != 0) {
+        height_size_adjust = 8 - (get_num_rows() % 8);
+    }
+
+
 
     if(order == ROW_MAJOR){
         //generate array to hold all of the rows
-        T** new_data = new T*[get_num_rows()];
+        T** new_data = new T*[get_num_rows()+height_size_adjust];
 
         //for each column
-        for(uint i = 0; i < get_num_rows(); i++){
+        for(uint i = 0; i < get_num_rows()+height_size_adjust; i++){
             //generate array to hold each column for the row
-            T* row = new T[get_num_columns()];
+            T* row = new T[get_num_columns()+width_size_adjust];
 
-            for(uint j = 0; j < get_num_columns(); j++){
-                row[j] = get_cell(i,j);
+            for(uint j = 0; j < get_num_columns()+width_size_adjust; j++){
+                if(i<get_num_rows() && j<get_num_columns()){
+                    row[j] = get_cell(i,j);
+                } else{
+                    row[j] = 0;
+                }
             } 
 
             //assign row array to location
@@ -238,15 +263,19 @@ template <typename T> void matrix<T>::set_data_ordering(uint order){
 
     } else {
         //generate array to hold all of the columns
-        T** new_data = new T*[get_num_columns()];
+        T** new_data = new T*[get_num_columns()+width_size_adjust];
 
         //for each column
-        for(uint i = 0; i < get_num_columns(); i++){
+        for(uint i = 0; i < get_num_columns()+width_size_adjust; i++){
             //generate array to hold each row for the column
-            T* column = new T[get_num_rows()];
+            T* column = new T[get_num_rows()+height_size_adjust];
 
-            for(uint j = 0; j < get_num_rows(); j++){
-                column[j] = get_cell(j, i);
+            for(uint j = 0; j < get_num_rows()+height_size_adjust; j++){
+                if(i<get_num_columns() && j<get_num_rows()){
+                    column[j] = get_cell(i,j);
+                } else{
+                    column[j] = 0;
+                }
             } 
 
             //assign column array to location
@@ -279,7 +308,7 @@ template <typename T> std::ostream& operator<<(std::ostream& os, const matrix<T>
 
 
 template <typename T> bool operator==(const matrix<T> a, const matrix<T> b) {
-    printf("%d %d, %d %d\n",a.get_num_rows(), b.get_num_rows(), a.get_num_columns(), b.get_num_columns());
+    //printf("%d %d, %d %d\n",a.get_num_rows(), b.get_num_rows(), a.get_num_columns(), b.get_num_columns());
     if(a.get_num_rows() != b.get_num_rows()){
         return false;
     }
@@ -289,9 +318,10 @@ template <typename T> bool operator==(const matrix<T> a, const matrix<T> b) {
     for(uint i = 0; i< a.get_num_rows(); i++){
 
         for(uint j =0; j< a.get_num_columns(); j++){
-            printf("%f %f ", a.get_cell(i,j), b.get_cell(i, j));
-            printf("%f\n", abs(a.get_cell(i,j) - b.get_cell(i, j)));
+            //printf("%f %f ", a.get_cell(i,j), b.get_cell(i, j));
+            //printf("%f\n", abs(a.get_cell(i,j) - b.get_cell(i, j)));
             if(abs(a.get_cell(i,j) - b.get_cell(i, j)) > MATRIX_COMPARISON_EPSILON){
+                std::cout<<"FAILED MATCH " <<a.get_cell(i,j)  << " " << b.get_cell(i, j) << " "<< abs(a.get_cell(i,j) - b.get_cell(i, j)) <<std::endl;
                 return false;
             } 
         }

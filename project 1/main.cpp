@@ -43,21 +43,21 @@ template<class MATTRIX_TYPE> void matrix_tester(uint matrix_size){
     std::cout << *output_mult_optimized <<std::endl;
     #endif
 
-    assert(*output_mult_trad == *output_mult_optimized);
+    //assert(*output_mult_trad == *output_mult_optimized);
 }
 int main(int argc, char *argv[])
 {   
     //set static seed for performance testing
     srand(0);
 
-    
+    /*
     const float in_1[16] = {1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0};
     const float in_2[16] = {1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0};
 
     float output = simd_dot_product((const float *)&in_1, (const float *)&in_2, 10);
     printf("%f\n",output);
-    
-    /*
+    */
+
 
     uint matrix_size;
     if(argc < 2){
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     #else
         matrix_tester<MATRIX_TEST_TYPE>(matrix_size);
     #endif
-*/
+
 
 }
 
