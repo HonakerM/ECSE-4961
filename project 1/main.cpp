@@ -9,7 +9,7 @@
 #include "math.h"
 
 
-template<class MATTRIX_TYPE> void matrx_tester(uint matrix_size){
+template<class MATTRIX_TYPE> void matrix_tester(uint matrix_size){
     
     std::cout << "Started Geneation" << std::endl;
     matrix<MATTRIX_TYPE> matrix_a = matrix<MATTRIX_TYPE>(matrix_size, matrix_size, true);
@@ -23,27 +23,29 @@ template<class MATTRIX_TYPE> void matrx_tester(uint matrix_size){
     std::cout << "Finished Geneation & Started Traditional Multiplication" << std::endl;
 
     auto start_traditional_time = std::chrono::high_resolution_clock::now();
-    matrix<MATTRIX_TYPE>* output_mult = mult_matrix(&matrix_a, &matrix_b, false);
+    matrix<MATTRIX_TYPE>* output_mult_trad = mult_matrix(&matrix_a, &matrix_b, false);
     auto end_traditional_time = std::chrono::high_resolution_clock::now();
     
     std::cout << "Finished C++ Multiplication" << std::endl;
     std::cout << "Traditional C++ Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_traditional_time-start_traditional_time)).count() << "μs" << std::endl;
-    delete output_mult;
 
 
 
     auto start_optimized_time = std::chrono::high_resolution_clock::now();
-    output_mult = mult_matrix(&matrix_a, &matrix_b, true);
+    matrix<MATTRIX_TYPE>* output_mult_optimized = mult_matrix(&matrix_a, &matrix_b, true);
     auto end_optimized_time = std::chrono::high_resolution_clock::now();
     
     std::cout << "Finished Optimized Multiplication" << std::endl;
     std::cout << "Optimized  Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_optimized_time-start_optimized_time)).count() << "μs" << std::endl;
     
     #ifdef DISPLAY_MATRIX
-    std::cout << *output_mult <<std::endl;
+    std::cout << *output_mult_trad <<std::endl;
+    std::cout << *output_mult_optimized <<std::endl;
     #endif
 
-    delete output_mult;
+    printf("%d\n",*output_mult_trad == *output_mult_optimized);
+    delete output_mult_trad;
+    delete output_mult_optimized;
 }
 int main(int argc, char *argv[])
 {   
@@ -66,7 +68,13 @@ int main(int argc, char *argv[])
         matrix_size = std::stoi(argv[1]);
     }
 
-    matrx_tester<int>(matrix_size);
+    #ifndef MATRIX_TEST_TYPE
+        matrix_tester<float>(matrix_size);
+    #else
+        matrix_tester<MATRIX_TEST_TYPE>(matrix_size);
+    #endif
+
+
 }
 
 
