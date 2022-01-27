@@ -33,7 +33,7 @@ The overall structure for the matrix is the same for both the `float` and `short
 ## Performance Results
 
 ### Testing Methology
-Each configuration will be tested 5 times on matricies sized 100, 1000, and 10000. The results will then be averaged and compared via graphs. These tests will only measure the time required to actually multiply the matrices any generation or memory clean up is not included. Times are in milliseconds. 
+Each configuration will be tested 5 times on matricies sized 100, 1000, and 10000. The results will then be averaged and compared via graphs. These tests will only measure the time required to actually multiply the matrices any generation or memory clean up is not included. All times are in milliseconds. These results were gathered on a `Intel Xeon E3-1220 v5` with `4gb` of memory running `Ubuntu 20.04`.
 
 ### SIMD vs Traditional C++
 To compile the program with just simd improvements run `make build`. This is the same as `g++ -Wall -g *.cpp -o main.o -msse4.1 -mavx`
