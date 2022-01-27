@@ -14,13 +14,11 @@
 #define SIMD_BATCH_SIZE 8
 
 // function used to calculate the multiplication of matrix using SIMD instructions
-template<class MATRIX_TYPE> matrix<MATRIX_TYPE>* mult_matrix(matrix<MATRIX_TYPE>* a, matrix<MATRIX_TYPE>* b, bool);
-
 float simd_dot_product( const float* a, const float* b, uint size);
 float sisd_dot_product( const float* a, const float* b, uint size);
 
-int simd_dot_product( const int* a, const int* b, uint size);
-int sisd_dot_product( const int* a, const int* b, uint size);
+short simd_dot_product( const short* a, const short* b, uint size);
+short sisd_dot_product( const short* a, const short* b, uint size);
 
 template<class MATRIX_TYPE> matrix<MATRIX_TYPE>* mult_matrix(matrix<MATRIX_TYPE>* a, matrix<MATRIX_TYPE>* b, bool simd) {
     //assert that multiplication can happen
