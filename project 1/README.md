@@ -49,7 +49,7 @@ The main place SIMD can speed up matrix multiplication is in computing the dot p
 | 10000       |                            |                       |
 
 #### Short
-| Matrix Size | Traditional C++ Time | AVX SIMD Time |
+| Matrix Size | Traditional C++ Time | SSE SIMD Time |
 |-------------|:--------------------------:|:-------------------:|
 | 100         | 2.643                      | 1.270               |
 | 1000        | 2288.206                   | 84.4519             |
@@ -82,7 +82,8 @@ When optimizing cache it is most important to look at the cache rate. I utilized
 | 1000        | 1.7% Miss rate (2.2% read and 0.1% write)  | 0.6% Miss Rate (0.7% read and 0.2% write) |
 | 10000       |                                            |                                           |
 
+#### Short
 
 ### C++ Optimization
 
-For fun testing we decided to test how well `g++` will optimize the code. We ran the same build but with the `-Ofast` option which will make `g++` spend more time optimizing calls to try to speed up the application. As the below table shows this
+For fun testing we decided to test how well `g++` will optimize the code. We ran the same build but with the `-Ofast` option which will make `g++` spend more time optimizing calls to try to speed up the application. As the tables below show this marginally affected performance.
