@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <iostream>
 
+
 // define matrix organization macros
 // this determines weather a matrix is 
 // stored by rows or columns. This
@@ -20,7 +21,11 @@
 #define ROW_MAJOR 0x01
 #define COL_MAJOR 0x02
 
-//floating poitn matrix class
+// this macro defines the epsilon for float
+// comparison. 
+#define MATRIX_COMPARISON_EPSILON 0.1
+
+//template matrix class
 template <typename T>
 class matrix {
 public:
@@ -97,8 +102,8 @@ template <typename T> matrix<T>::matrix(uint width, uint height, bool fill_data)
             //if still within the bounds of the matrix
             if(fill_data && j<height && i<width){
                 
-                //column[j] = j;
-                column[j] = (T)rand();
+                column[j] = j;
+                //column[j] = (T)rand();
 
             //else pad 0s
             } else {
@@ -284,8 +289,9 @@ template <typename T> bool operator==(const matrix<T> a, const matrix<T> b) {
     for(uint i = 0; i< a.get_num_rows(); i++){
 
         for(uint j =0; j< a.get_num_columns(); j++){
-            printf("%f %f\n", a.get_cell(i,j), b.get_cell(i, j));
-            if(a.get_cell(i,j) != b.get_cell(i, j)){
+            printf("%f %f ", a.get_cell(i,j), b.get_cell(i, j));
+            printf("%f\n", abs(a.get_cell(i,j) - b.get_cell(i, j)));
+            if(abs(a.get_cell(i,j) - b.get_cell(i, j)) > MATRIX_COMPARISON_EPSILON){
                 return false;
             } 
         }
