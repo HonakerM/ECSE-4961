@@ -64,7 +64,7 @@ int simd_dot_product( const int* a, const int* b, uint size){
 		sum = _mm_add_epi16 ( sum , temp_var );
     }
 
-    //get the lowest 32 bytes of the sum and then cast to just the lower 16
+    //get the lowest 32 bytes of the sum and then mask to just the lower 16
     return _mm_cvtsi128_si32 ( sum ) & 0x00FF;
 }
 
@@ -76,5 +76,6 @@ int sisd_dot_product( const int* a, const int* b, uint size){
         sum += a[i] * b[i];
     }
 
-    return sum;
+    //mask the lowest 16
+    return sum & 0x00FF;
 }

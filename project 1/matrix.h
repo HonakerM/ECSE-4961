@@ -52,6 +52,7 @@ public:
      * Operator
      */
     template<class U> friend std::ostream& operator<<(std::ostream& os, const matrix<U>& matrix);
+    template<class U> friend bool operator==(const matrix<U> a, const matrix<U> b);
 
 private:
     uint num_rows;
@@ -269,6 +270,27 @@ template <typename T> std::ostream& operator<<(std::ostream& os, const matrix<T>
         os << "\n";
     }
     return os;
+}
+
+
+template <typename T> bool operator==(const matrix<T> a, const matrix<T> b) {
+    printf("%d %d, %d %d\n",a.get_num_rows(), b.get_num_rows(), a.get_num_columns(), b.get_num_columns());
+    if(a.get_num_rows() != b.get_num_rows()){
+        return false;
+    }
+    if(a.get_num_columns() != b.get_num_columns()){
+        return false;
+    }
+    for(uint i = 0; i< a.get_num_rows(); i++){
+
+        for(uint j =0; j< a.get_num_columns(); j++){
+            printf("%f %f\n", a.get_cell(i,j), b.get_cell(i, j));
+            if(a.get_cell(i,j) != b.get_cell(i, j)){
+                return false;
+            } 
+        }
+    }
+    return true;
 }
 
 #endif
