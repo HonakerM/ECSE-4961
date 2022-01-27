@@ -10,8 +10,9 @@
 
 
 template<class MATTRIX_TYPE> void matrix_tester(uint matrix_size){
-    
+    #ifndef TIME_ONLY  
     std::cout << "Started Geneation" << std::endl;
+    #endif
     matrix<MATTRIX_TYPE> matrix_a = matrix<MATTRIX_TYPE>(matrix_size, matrix_size, true);
     matrix<MATTRIX_TYPE> matrix_b = matrix<MATTRIX_TYPE>(matrix_size, matrix_size, true);
 
@@ -20,23 +21,34 @@ template<class MATTRIX_TYPE> void matrix_tester(uint matrix_size){
     std::cout <<matrix_b <<std::endl;
     #endif
 
+    #ifndef TIME_ONLY  
     std::cout << "Finished Geneation & Started Traditional Multiplication" << std::endl;
+    #endif
 
+    #ifndef OPTIMIZED_ONLY
     auto start_traditional_time = std::chrono::high_resolution_clock::now();
     matrix<MATTRIX_TYPE>* output_mult_trad = mult_matrix(&matrix_a, &matrix_b, false);
     auto end_traditional_time = std::chrono::high_resolution_clock::now();
     
+    #ifndef TIME_ONLY
     std::cout << "Finished C++ Multiplication" << std::endl;
-    std::cout << "Traditional C++ Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_traditional_time-start_traditional_time)).count() << "μs" << std::endl;
+    std::cout << "Traditional C++ Execution Time: ";
+    #endif
 
+    std::cout << (std::chrono::duration_cast<std::chrono::microseconds>(end_traditional_time-start_traditional_time)).count() << "μs" << std::endl;
 
+    #endif
 
     auto start_optimized_time = std::chrono::high_resolution_clock::now();
     matrix<MATTRIX_TYPE>* output_mult_optimized = mult_matrix(&matrix_a, &matrix_b, true);
     auto end_optimized_time = std::chrono::high_resolution_clock::now();
     
+    #ifndef TIME_ONLY
     std::cout << "Finished Optimized Multiplication" << std::endl;
-    std::cout << "Optimized  Execution Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end_optimized_time-start_optimized_time)).count() << "μs" << std::endl;
+    std::cout << "Optimized  Execution Time: ";
+    #endif
+
+    std::cout << (std::chrono::duration_cast<std::chrono::microseconds>(end_optimized_time-start_optimized_time)).count() << "μs" << std::endl;
     
     #ifdef DISPLAY_MATRIX
     std::cout << *output_mult_trad <<std::endl;
