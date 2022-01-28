@@ -29,6 +29,9 @@ The program is split into 3 core types of functions `main`, `math` and `matrix`.
 ### Data Storage
 The overall structure for the matrix is the same for both the `float` and `short` data types. The `matrix` class is a temlpated class located at [matrix.h](https://github.com/HonakerM/ECSE-4961/blob/main/project%201/matrix.h). The actual matrix is stored as a 2d  array stored on the heap. The matrix class has the unique ability to switch between storing the 2d array in column major and row major order ( more information about the differnces can be found [at this great wikipedia page](https://en.wikipedia.org/wiki/Row-_and_column-major_order) ). This incures the cost of completely reallocating the 2d array but it can be a great performance boon. 
 
+### Algorithm Structure
+The general matrix multiplication algorithm is the same for all types. The only difference is how the dot product is calculatd. For traidtional C++ the dot product is calculated via the built in `*` and `+` operators. For float dot product I utilized the AVX instruction `_mm256_dp_ps` to calculate the dot product of 2 vectors of 8 float values  in one instruction. There are not many 16 bit int AVX instructions so I decieded to use SSE instructions. SSE still allows the multiplication and addition of 2 vectors of 8 short value. 
+
 
 ## Performance Results
 
@@ -39,7 +42,7 @@ Each configuration will be tested 5 times on matricies sized 100, 1000, and 1000
 To compile the program with just simd improvements run `make build`. This is the same as `g++ -Wall -g *.cpp -o main.o -msse4.1 -mavx`
 
 
-The main place SIMD can speed up matrix multiplication is in computing the dot product. The AVX simd instruction `_mm256_dp_ps` or the `short` equivilant allows computing 8 dot product calculations in one instruction. As the table below shows this change can net as much as a % gain in the 10000 sized matrix multiplication for floats. 
+The main place SIMD can speed up matrix multiplication is in computing the dot product. The AVX simd instruction `_mm256_dp_ps` or the  SSE `short` equivilant allows computing 8 dot product calculations in one instruction. As the table below shows this change can net as much as a % gain in the 10000 sized matrix multiplication for floats. 
 
 #### Float
 | Matrix Size | Traditional C++ Time | AVX SIMD Timing |
@@ -84,6 +87,3 @@ When optimizing cache it is most important to look at the cache rate. I utilized
 
 #### Short
 
-### C++ Optimization
-
-For fun testing we decided to test how well `g++` will optimize the code. We ran the same build but with the `-Ofast` option which will make `g++` spend more time optimizing calls to try to speed up the application. As the tables below show this marginally affected performance.
