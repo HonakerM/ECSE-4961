@@ -13,7 +13,12 @@ The first project of ECSE-4961 was to multiply two matricies together using SIMD
 
 This project was created using `g++ v10.2.1-6` with the optional dependency of `GNU Make 4.3`. The [Old Dominion University](https://www.cs.odu.edu/~zeil/cs250PreTest/latest/Public/installingACompiler/) has some simple documentation on how to install `g++` depending on your operating system. The matrix multiplication algrothims require cpu's that support the SSE4.1 and AVX processor instructions. The project will not compile without these extensions.
 
-  
+### Downloading
+
+This project can either be downloaded as a zip or cloned using the following git command:
+```
+git clone https://github.com/HonakerM/ECSE-4961.git
+```
 
 ### Build
 
