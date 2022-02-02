@@ -3,8 +3,8 @@
 #define MAIN_H_
 
 
-#include <stdio.h>     // printf
-#include <stdlib.h>    // free
-
+#include <stdio.h>     // 
+#include <stdlib.h>
+#include <iostream>  
 
 #endif
