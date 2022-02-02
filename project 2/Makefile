@@ -1,2 +1,2 @@
 default:
-	g++  -g *.cpp -o ./main.o -lzstd
+	g++  -g *.cpp -o ./main.o -lzstd -pthread
