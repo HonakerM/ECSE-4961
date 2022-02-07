@@ -3,9 +3,11 @@
 
 //defines
 #define IDLE 0x01
-#define COMPRESSING 0x02
-#define ERROR 0x03
-#define COMPLETED 0x04
+#define WAITING_FOR_COMPRESSION 0x02
+#define COMPRESSING 0x03
+#define ERROR 0x04
+#define COMPLETED 0x05
+#define EXITED 0x06
 
 //include general model
 #include "main.h"
@@ -22,6 +24,8 @@ public:
 
     //threading waiting
     void compression_loop();
+    void start_loop();
+    void exit_loop();
 
 
     //start compression
@@ -33,6 +37,7 @@ public:
     //
     size_t get_compressed_chunk(void *dest_chunk);
     
+    void* dst_chunk=nullptr;
 
 private:
     char id;
@@ -40,7 +45,6 @@ private:
 
 
     void* src_chunk=nullptr;
-    void* dst_chunk=nullptr;
     size_t dst_size;
 };
 

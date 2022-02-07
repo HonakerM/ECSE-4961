@@ -7,5 +7,6 @@
 #include <stdlib.h>
 #include <iostream>  
 #include <string>
+#include <cstring>
 
 #endif
