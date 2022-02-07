@@ -50,10 +50,14 @@ bool ZSTDWorker::compress_chunk(void* chunk){
 
 
 size_t ZSTDWorker::get_compressed_chunk(void* dest_ptr){
-    
-    
+    //copy the value from dst_chunk to dest_prt
     std::memcpy(dest_ptr, dst_chunk, dst_size);
+
+    //free the chucnk
     free(dst_chunk);
+
+    //reset values
+    dst_chunk = nullptr;
     src_chunk = nullptr;
     status = IDLE;
     return dst_size;
