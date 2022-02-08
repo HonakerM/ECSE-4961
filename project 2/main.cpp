@@ -102,13 +102,18 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
     void* worker_src_slice[num_of_workers];
 
 
-    //open file for reading
+    // open file for reading
     std::ifstream input_file;
     input_file.open (input_filename, std::ios::binary);
 
+    // define refenrce for input chunk and chunk size
     void* chunk=nullptr;
     long chunk_size=LONG_MAX;
+
+    // define variables used in loop evaluation
     bool all_chunks_completed = false;
+    bool reached_eof = false;
+
     while(!all_chunks_completed){
         // assume all chunks are completed
         all_chunks_completed = true;
@@ -119,10 +124,6 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
 
 
             if(status != IDLE){
-                if(current_slice> 75){
-                    std::cout<<status<<std::endl;
-                    return;
-                }
                 all_chunks_completed = false;
             }
             
@@ -133,8 +134,7 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
 
                 std::cout<<"Block "<< slice << " from worker "<< worker->get_id()<< " has been compressed"<< std::endl;
 
-
-                // 
+                // generate memory for dest buffer
                 void* dest_buffer = malloc(MAX_COMPRESSED_SIZE);
                 size_t compressed_size = worker->get_compressed_chunk(dest_buffer);
 
@@ -142,6 +142,8 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
                 output_buffer.at(slice) = dest_buffer;
                 output_buffer_size.at(slice) = compressed_size;
 
+                //free the src buffer
+                free(worker_src_slice[i]);
 
                 // update status so it will immediatly get assigned a new block
                 status = worker->get_compression_status();
@@ -149,7 +151,7 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
             
             } 
             
-            if(status == IDLE){
+            if(status == IDLE && !reached_eof){
                 
                 // if chunk is empty
                 // this should always happen
@@ -162,6 +164,9 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
 
                     //if chunk size is 0
                     if(chunk_size == 0){
+                        reached_eof = true;
+                        free(chunk);
+                        
                         continue;
                     }
                 }
@@ -198,6 +203,7 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
     std::ofstream output_file;
     output_file.open (output_filename, std::ios::binary);
 
+    std::cout<< "Writing Compressed data to file" <<std::endl;
     for ( uint i = 0; i < current_slice ; i++ ) {
         // get buffer and buffer size from vector
         void* buffer = output_buffer.at(i);
@@ -227,5 +233,6 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
 int main(int argc, char ** argv){
 
     //individual_test();
-    compress_file(5, "./test.data", "./test.zstd");
+
+    compress_file(10, "./test.data", "./test.zstd");
 }
