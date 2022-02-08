@@ -96,6 +96,13 @@ void compress_large_chunk(uint num_of_workers, void* chunk, uint chunk_size){
             uint status = worker->get_compression_status();
             
             if(status == COMPLETED){
+               
+            }
+            
+            if(status == IDLE){
+                // 
+                std::cout<<"Assigning Block "<< current_slice << " to worker "<< worker->get_id()<< std::endl;
+
                 // assign the current section
                 worker_section[i] = current_slice;
 
@@ -106,15 +113,13 @@ void compress_large_chunk(uint num_of_workers, void* chunk, uint chunk_size){
                 }
 
                 // compress chunk
-                worker->compress_chunk(chunk[current_slice*CHUNK_BYTE_SIZE], compressing_size);
+                //worker->compress_chunk(chunk[current_slice*CHUNK_BYTE_SIZE], compressing_size);
                 
                 // set update size_remaining
                 size_remaining = size_remaining - compressing_size;
-            }
-            
-            if(status == IDLE){
-                
 
+                //increment current slice
+                current_slice++;
             }
         }
     }
@@ -129,10 +134,11 @@ void compress_large_chunk(uint num_of_workers, void* chunk, uint chunk_size){
         delete worker;
     }   
 
+    free(output_buffer);
 
 }
 
 int main(int argc, char ** argv){
-    individual_test();
-    //compress_large_chunk(5, nullptr);
+    //individual_test();
+    compress_large_chunk(5, nullptr, CHUNK_BYTE_SIZE*6);
 }
