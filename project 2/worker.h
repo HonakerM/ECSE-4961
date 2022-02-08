@@ -33,6 +33,7 @@ public:
 
     //get status
     short get_compression_status() { return status; }
+    char get_id() { return id;}
 
     //
     size_t get_compressed_chunk(void *dest_chunk);
