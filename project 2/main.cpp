@@ -34,12 +34,12 @@ void individual_test(){
     ZSTDWorker worker = ZSTDWorker('a');
     std::thread worker_1_thread(&ZSTDWorker::compression_loop, &worker);
 
-    worker.compress_chunk(source_buffer, MAX_COMPRESSED_SIZE);
+    worker.compress_chunk(source_buffer, CHUNK_BYTE_SIZE);
     while(worker.get_compression_status() != COMPLETED ) {
         //std::cout << worker.get_compression_status() << std::endl;
     }
 
-    worker_dest_buffer = malloc(CHUNK_BYTE_SIZE);
+    worker_dest_buffer = malloc(MAX_COMPRESSED_SIZE);
     size_t compressed_size = worker.get_compressed_chunk(worker_dest_buffer);
     
     std::cout << CHUNK_BYTE_SIZE << " -> "<< compressed_size << std::endl;
@@ -67,7 +67,13 @@ void individual_test(){
     worker_1_thread.join();
 }
 
-void compress_large_chunk(uint num_of_workers, void* chunk, uint chunk_size){
+
+long read_chunk(std::ifstream& stream, void* buffer ){
+    stream.read((char*)buffer, CHUNK_BYTE_SIZE);
+    return stream.gcount();
+}
+
+void compress_file(uint num_of_workers, std::string filename){
     ZSTDWorker* worker_array[num_of_workers];
     std::thread thread_array[num_of_workers];
 
@@ -81,49 +87,93 @@ void compress_large_chunk(uint num_of_workers, void* chunk, uint chunk_size){
         worker_array[i] = worker;
     }   
 
+    
     //generate output buffer
-    size_t max_output_size = zstd::ZSTD_compressBound(chunk_size);
-    void* output_buffer = malloc(max_output_size);
+    std::vector<void*> output_buffer;
+    std::vector<int> output_buffer_size;
 
-    //get size remainging
-    uint size_remaining = chunk_size;
+
+    //configure worker sections and current output slice
     uint worker_section[num_of_workers];
     uint current_slice = 0;
 
-    while(size_remaining!=0){
+    // keep array of what slice the workers are currently working on
+    // this will be used to free the memory after compression
+    void* worker_src_slice[num_of_workers];
+
+
+    //open file for reading
+    std::ifstream input_file;
+    input_file.open (filename);
+
+    void* chunk=nullptr;
+    long chunk_size=LONG_MAX;
+    std::cout<<1<<std::endl;
+    while(chunk_size!=0){
         for(uint i=0; i< num_of_workers; i++){
             ZSTDWorker* worker = worker_array[i];
             uint status = worker->get_compression_status();
             
             if(status == COMPLETED){
-               
+                //get the worker section
+                uint slice = worker_section[i];
+
+                std::cout<<"Block "<< slice << " from worker "<< worker->get_id()<< " has been compressed"<< std::endl;
+
+
+                // 
+                void* dest_buffer = malloc(MAX_COMPRESSED_SIZE);
+                size_t compressed_size = worker->get_compressed_chunk(dest_buffer);
+
+                //update output buffer
+                output_buffer.at(slice) = dest_buffer;
+                output_buffer_size.at(slice) = compressed_size;
+
+
+                // update status so it will immediatly get assigned a new block
+                status = worker->get_compression_status();
             }
             
             if(status == IDLE){
+
+                if(chunk == nullptr){
+                    //read in chunk
+                    chunk = malloc(CHUNK_BYTE_SIZE);
+
+                    chunk_size =  read_chunk(input_file, chunk);
+
+                    //if chunk size is 0
+                    if(chunk_size == 0){
+                        break;
+                    }
+                }
+
                 // 
                 std::cout<<"Assigning Block "<< current_slice << " to worker "<< worker->get_id()<< std::endl;
 
-                // assign the current section
-                worker_section[i] = current_slice;
 
-                // get compressed size if not enough  data left
-                uint compressing_size = CHUNK_BYTE_SIZE;
-                if(size_remaining < CHUNK_BYTE_SIZE ){
-                    compressing_size = size_remaining;
-                }
+                // assign the current section and assign chunk
+                worker_section[i] = current_slice;
+                worker_src_slice[i] = chunk;
 
                 // compress chunk
-                //worker->compress_chunk(chunk[current_slice*CHUNK_BYTE_SIZE], compressing_size);
+                worker->compress_chunk(chunk, chunk_size);
                 
-                // set update size_remaining
-                size_remaining = size_remaining - compressing_size;
-
                 //increment current slice
                 current_slice++;
+
+                //add space in the output vectors
+                output_buffer.push_back(nullptr);
+                output_buffer_size.push_back(0);
+
+                //reset the current chunk
+                chunk = nullptr;
             }
         }
     }
 
+
+    input_file.close();
 
     //close all workers
     for(uint i=0; i< num_of_workers; i++){
@@ -134,11 +184,10 @@ void compress_large_chunk(uint num_of_workers, void* chunk, uint chunk_size){
         delete worker;
     }   
 
-    free(output_buffer);
-
 }
 
 int main(int argc, char ** argv){
+
     //individual_test();
-    compress_large_chunk(5, nullptr, CHUNK_BYTE_SIZE*6);
+    compress_file(5, "./test.data");
 }

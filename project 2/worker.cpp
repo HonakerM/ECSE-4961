@@ -22,7 +22,6 @@ void ZSTDWorker::compression_loop(){
 
             //allocate space for destination buffer
             dst_chunk = malloc(MAX_COMPRESSED_SIZE);
-
             //compress chunk
             dst_size = zstd_compress_chunk(src_chunk, src_size, dst_chunk);
 
