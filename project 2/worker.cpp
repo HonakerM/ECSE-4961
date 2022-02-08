@@ -37,7 +37,7 @@ void ZSTDWorker::exit_loop(){
 
 
 bool ZSTDWorker::compress_chunk(void* chunk, size_t size){
-    if(status == IDLE){
+    if(status == IDLE && size != 0){
         dst_size = 0;
         src_chunk = chunk;
         src_size = size;
