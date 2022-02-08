@@ -8,5 +8,7 @@
 #include <iostream>  
 #include <string>
 #include <cstring>
+#include <vector>
+#include <fstream>
 
 #endif
