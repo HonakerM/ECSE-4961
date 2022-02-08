@@ -16,8 +16,7 @@
 /*
  * Function Declerations
 */
-size_t zstd_compress_chunk(void* const chunk, void* const comressed);
-
+size_t zstd_compress_chunk(void* const chunk_buffer, uint chunk_size, void*  compressed_buffer);
 
 
 
