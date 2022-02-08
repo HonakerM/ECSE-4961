@@ -29,7 +29,7 @@ public:
 
 
     //start compression
-    bool compress_chunk(void* chunk);
+    bool compress_chunk(void* chunk, size_t src_size);
 
     //get status
     short get_compression_status() { return status; }
@@ -37,14 +37,14 @@ public:
     //
     size_t get_compressed_chunk(void *dest_chunk);
     
-    void* dst_chunk=nullptr;
 
 private:
     char id;
     short status;
 
-
     void* src_chunk=nullptr;
+    size_t src_size;
+    void* dst_chunk=nullptr;
     size_t dst_size;
 };
 

@@ -24,7 +24,7 @@ void ZSTDWorker::compression_loop(){
             dst_chunk = malloc(MAX_COMPRESSED_SIZE);
 
             //compress chunk
-            dst_size = zstd_compress_chunk(src_chunk, dst_chunk);
+            dst_size = zstd_compress_chunk(src_chunk, src_size, dst_chunk);
 
             //mark compression as complete
             status=COMPLETED;
@@ -37,10 +37,11 @@ void ZSTDWorker::exit_loop(){
 }
 
 
-bool ZSTDWorker::compress_chunk(void* chunk){
+bool ZSTDWorker::compress_chunk(void* chunk, size_t size){
     if(status == IDLE){
         dst_size = 0;
         src_chunk = chunk;
+        src_size = size;
         status = WAITING_FOR_COMPRESSION;
         return true;
     }
