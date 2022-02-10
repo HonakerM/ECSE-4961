@@ -12,9 +12,15 @@ ZSTDWorker::~ZSTDWorker(){
 }
 
 void ZSTDWorker::compression_loop(){
+    #ifdef DEBUG_OUTPUT
+    std::cout<<"Starting worker "<<id<<std::endl;
+    #endif
+
     while(1){
         if(status == EXITED) {
+            #ifdef DEBUG_OUTPUT
             std::cout<<"Exiting worker "<<id<<std::endl;
+            #endif
             return;
         }
         if(status==WAITING_FOR_COMPRESSION && src_chunk!=nullptr){
