@@ -1,7 +1,10 @@
 #include "main.h"
 #include "worker.h"
 #include "zstd_util.h"
+#include <chrono>
 
+
+//test compressing individual chunks
 void individual_test(){
     int* source_buffer = (int*)malloc(CHUNK_BYTE_SIZE);
     for(uint i =0; i < CHUNK_BYTE_SIZE/sizeof(int); i++){
@@ -68,22 +71,35 @@ void individual_test(){
 }
 
 
+// read 16k chunk from a file
 long read_chunk(std::ifstream& stream, void* buffer ){
     stream.read((char*)buffer, CHUNK_BYTE_SIZE);
     return stream.gcount();
 }
 
+// compress input_file and store it in output_filename
 void compress_file(uint num_of_workers, std::string input_filename, std::string output_filename){
+    
+    auto startup_time = std::chrono::high_resolution_clock::now();
+    
+    //generate array of workers and threads
     ZSTDWorker* worker_array[num_of_workers];
     std::thread thread_array[num_of_workers];
 
     //start up workers
+    char start_char = 'a';
     for(uint i=0; i<num_of_workers; i++){
-        //
-        ZSTDWorker* worker = new ZSTDWorker('a'+i);
+        //update the start char
+        if(i==26){
+            start_char = 'A'-26;
+        }
+        //create worker
+        ZSTDWorker* worker = new ZSTDWorker(start_char+i);
         
         //start worker thread and add worker to worker_array
         thread_array[i] = std::thread(&ZSTDWorker::compression_loop, worker);
+        thread_array[i].detach();
+
         worker_array[i] = worker;
     }   
 
@@ -114,15 +130,25 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
     bool all_chunks_completed = false;
     bool reached_eof = false;
 
+    #ifdef DEBUG_OUTPUT
+    std::cout<<"Starting data compression"<<std::endl;
+    #endif 
+
+    auto endup_time = std::chrono::high_resolution_clock::now();
+
+    
+
     while(!all_chunks_completed){
         // assume all chunks are completed
         all_chunks_completed = true;
 
+        //loop through all workers
         for(uint i=0; i< num_of_workers; i++){
+            //get the worker and its compression status
             ZSTDWorker* worker = worker_array[i];
             uint status = worker->get_compression_status();
 
-
+            //if worker is not idle then it is owkring
             if(status != IDLE){
                 all_chunks_completed = false;
             }
@@ -132,7 +158,9 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
                 //get the worker section
                 uint slice = worker_section[i];
 
+                #ifdef DEBUG_OUTPUT
                 std::cout<<"Block "<< slice << " from worker "<< worker->get_id()<< " has been compressed"<< std::endl;
+                #endif
 
                 // generate memory for dest buffer
                 void* dest_buffer = malloc(MAX_COMPRESSED_SIZE);
@@ -157,9 +185,10 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
                 // this should always happen
                 if(chunk == nullptr){
 
-                    //read in chunk
+                    //allocate memory for input chunk
                     chunk = malloc(CHUNK_BYTE_SIZE);
 
+                    //read chunk
                     chunk_size =  read_chunk(input_file, chunk);
 
                     //if chunk size is 0
@@ -171,9 +200,13 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
                     }
                 }
 
-                // 
-                std::cout<<"Assigning Block "<< current_slice << " to worker "<< worker->get_id()<< std::endl;
+                // if assigning block then all chunks are not completed
                 all_chunks_completed = false;
+
+
+                #ifdef DEBUG_OUTPUT
+                std::cout<<"Assigning Block "<< current_slice << " to worker "<< worker->get_id()<< std::endl;
+                #endif
 
                 // assign the current section and assign chunk
                 worker_section[i] = current_slice;
@@ -203,7 +236,10 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
     std::ofstream output_file;
     output_file.open (output_filename, std::ios::binary);
 
+    #ifdef DEBUG_OUTPUT
     std::cout<< "Writing Compressed data to file" <<std::endl;
+    #endif
+
     for ( uint i = 0; i < current_slice ; i++ ) {
         // get buffer and buffer size from vector
         void* buffer = output_buffer.at(i);
@@ -216,23 +252,56 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
         free(buffer);
     }
 
+    auto endcompression_time = std::chrono::high_resolution_clock::now();
+
+
     //close the output file
     output_file.close();
 
-    //close all workers
+    //trigger all workers to close
     for(uint i=0; i< num_of_workers; i++){
         ZSTDWorker* worker = worker_array[i];
         worker->exit_loop();
-        thread_array[i].join();
-
         delete worker;
     }   
+
+    auto teardown_time = std::chrono::high_resolution_clock::now();
+
+
+    auto startup = (std::chrono::duration_cast<std::chrono::milliseconds>(endup_time-startup_time)).count();
+    auto compression = (std::chrono::duration_cast<std::chrono::milliseconds>(endcompression_time - endup_time)).count();
+    auto teardown = (std::chrono::duration_cast<std::chrono::milliseconds>(teardown_time - endcompression_time)).count();
+
+    #ifdef TIME_OUTPUT
+    std::cout << "startup time: "<< startup << "ms compression time: " << compression <<"ms teardown time: "<< teardown << "ms"<< std::endl;
+    #endif
+
+
+
+        
+    
 
 }
 
 int main(int argc, char ** argv){
-
+    //used for testing indinvudal function calls
     //individual_test();
 
-    compress_file(10, "./test.data", "./test.zstd");
+    int worker_count = 5;
+    if(argc>1){
+        worker_count = atoi(argv[1]);
+    }
+
+    std::string input_file;
+    std::string output_file;
+    if(argc == 4){
+        input_file = std::string(argv[2]);
+        output_file = std::string(argv[3]);
+    }  else {
+        input_file = "./test.data";
+        output_file = "./test.zstd";
+    }
+
+    compress_file(worker_count, input_file, output_file);
+
 }
