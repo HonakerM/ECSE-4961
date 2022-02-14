@@ -41,7 +41,7 @@ public:
 
 private:
     char id;
-    short status;
+    volatile short status;
 
     void* src_chunk=nullptr;
     size_t src_size;

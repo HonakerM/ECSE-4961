@@ -127,7 +127,7 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
     long chunk_size=LONG_MAX;
 
     // define variables used in loop evaluation
-    bool all_chunks_completed = false;
+    volatile bool all_chunks_completed = false;
     bool reached_eof = false;
 
     #ifdef DEBUG_OUTPUT
@@ -229,6 +229,8 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
         //std::cout<<all_chunks_completed<<std::endl;
     }
 
+    auto endcompression_time = std::chrono::high_resolution_clock::now();
+
     // close the input file
     input_file.close();
 
@@ -239,6 +241,8 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
     #ifdef DEBUG_OUTPUT
     std::cout<< "Writing Compressed data to file" <<std::endl;
     #endif
+
+
 
     for ( uint i = 0; i < current_slice ; i++ ) {
         // get buffer and buffer size from vector
@@ -252,7 +256,7 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
         free(buffer);
     }
 
-    auto endcompression_time = std::chrono::high_resolution_clock::now();
+    auto endoutputtime = std::chrono::high_resolution_clock::now();
 
 
     //close the output file
@@ -270,10 +274,11 @@ void compress_file(uint num_of_workers, std::string input_filename, std::string 
 
     auto startup = (std::chrono::duration_cast<std::chrono::milliseconds>(endup_time-startup_time)).count();
     auto compression = (std::chrono::duration_cast<std::chrono::milliseconds>(endcompression_time - endup_time)).count();
-    auto teardown = (std::chrono::duration_cast<std::chrono::milliseconds>(teardown_time - endcompression_time)).count();
+    auto writing = (std::chrono::duration_cast<std::chrono::milliseconds>(endoutputtime - endcompression_time)).count();
+    auto teardown = (std::chrono::duration_cast<std::chrono::milliseconds>(teardown_time - endoutputtime)).count();
 
     #ifdef TIME_OUTPUT
-    std::cout << "startup time: "<< startup << "ms compression time: " << compression <<"ms teardown time: "<< teardown << "ms"<< std::endl;
+    std::cout << "startup time: "<< startup << "ms compression time: " << compression <<"ms output time: "<< writing<< "ms teardown time: "<< teardown << "ms"<< std::endl;
     #endif
 
 
