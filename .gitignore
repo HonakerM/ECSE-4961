@@ -1,3 +1,10 @@
+
+
+**/silesia.zip
+**/silesia/**
+**/test.data
+**/test.zstd
+
 # Prerequisites
 *.d
 
