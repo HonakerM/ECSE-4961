@@ -35,4 +35,10 @@ Once compiled tthhe compression can be executed by running the following command
 
 ## Structure
 
-## Performance Results
+## Performance Analysis 
+
+### Testing Methodology
+
+The compression system will be benchmarked against the [silesia](http://sun.aei.polsl.pl/~sdeor/index.php?page=silesia) corpus and will test worker count from 1 to 15. Each worker count will be tested 5 times and averaged. 
+
+### Results 
