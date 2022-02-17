@@ -51,6 +51,8 @@ These results were gathered on a ubuntu 20.04 virtual machine with 2  Intel(R) X
 
 ### Results 
 
+The timing of the application was split into 4 categories with all timings in `ms`. The startup time includes object creation and thread startup while Compression time is the actual time for the workers to compress the data. The output time is how long it took to write the data to file, finally Cleanup time is the time required to free any used memory and close any workers.
+
 | Startup Time | Compression Time | Output Time | Cleanup Time |
 |--------------|------------------|-------------|--------------|
 | 1.6          | 1401.4           | 89.6        | 66           |
