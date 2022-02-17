@@ -20,7 +20,7 @@ git clone https://github.com/HonakerM/ECSE-4961.git
 
 ### Build
 
-This project can be built using the `Makefile` by calling `make time`. Or by directly using `g++` by callign `g++` with the following options:
+This project can be built using the `Makefile` by calling `make time`. Or by directly using `g++` with the following options:
 
 ```
 g++ -std=c++11 -g *.cpp -o ./main.o -lzstd -pthread -D TIME_OUTPUT
@@ -37,7 +37,7 @@ Once compiled tthhe compression can be executed by running the following command
 
 ### Worker Structure
 
-Each worker is an instance of the `ZSTDWorker` class defined in `worker.h` and implemented in `worker.cpp`. The general logic flow for the worker is to first be instantiated by calling `ZSTDWorker(worker_id)` and then using the `thr 
+Each worker is an instance of the `ZSTDWorker` class defined in `worker.h` and implemented in `worker.cpp`. The general logic flow for the worker is to first be instantiated by calling `ZSTDWorker(worker_id)` and then a seperate thread is created by calling `std::thread(&ZSTDWorker::compression_loop, worker);`. This starts the `compression_loop` which is an infinite loop that is waiting for data to compress. Data is passed to and received via `compress_chunk` and `get_compressed_chunk`.  
 
 ## Performance Analysis 
 
@@ -71,4 +71,4 @@ These results were gathered on a ubuntu 20.04 virtual machine with 2  Intel(R) X
 
 ![Performance Results](results/graph.png)
 
-As you can see in the above graph and table the compression time continously decreases in time upto 4 workers. After that the compression time steadly increases. This is most likely due to the CPU limited to 4 parrallel operations (one on each core) and anything over 4 starts to incur context switching costs. The best worker count is bound to the number of cores avaible to the application.
+As you can see in the above graph and table the compression time continously decreases in time upto 4 workers. After that the compression time steadly increases. This is most likely due to the CPU limited to 4 parrallel operations (one on each core) and anything over 4 starts to incur context switching costs. The best worker count is bound to the number of CPU cores avaible to the application. Another thing to note is that while the startup cost is generallyy static the cleanup time almost trippled between 1 and 15 workers.
