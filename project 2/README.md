@@ -67,8 +67,8 @@ These results were gathered on a ubuntu 20.04 virtual machine with 2  Intel(R) X
 | 2.6          | 2718.6           | 365.4       | 120.4        |
 | 2.4          | 3013.4           | 272.4       | 172.6        |
 | 1.8          | 2973.8           | 393.8       | 221.2        |
-| 2.2          | 3124.6           | 175.2       | 185.4        |
+| 2.2          | 3124.6           | 352.2       | 185.4        |
 
 ![Performance Results](results/graph.png)
 
-As you can see in the above graph and table the compression time continously decreases
+As you can see in the above graph and table the compression time continously decreases in time upto 4 workers. After that the compression time steadly increases. This is most likely due to the CPU limited to 4 parrallel operations (one on each core) and anything over 4 starts to incur context switching costs. The best worker count is bound to the number of cores avaible to the application.
