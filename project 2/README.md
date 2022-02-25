@@ -33,6 +33,12 @@ Once compiled tthhe compression can be executed by running the following command
 ./main.o <num_of_workers> <input_file> <output_file>
 ```
 
+### Testing
+As mentioned bellow you can utilize the automated testing scripts by executing the following two scripts
+```
+scripts/get_corpus.sh
+scripts/test.sh
+```
 ## Structure
 
 ### Worker Structure
