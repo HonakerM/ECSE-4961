@@ -34,7 +34,7 @@ Once compiled tthhe compression can be executed by running the following command
 ```
 
 ### Testing
-As mentioned bellow you can utilize the automated testing scripts by executing the following two scripts
+As mentioned below you can utilize the automated testing scripts by executing the following two scripts. These utilize the linux tools `wget`, `unzip`, and `cat`.
 ```
 scripts/get_corpus.sh
 scripts/test.sh
