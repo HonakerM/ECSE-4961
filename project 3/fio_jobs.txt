@@ -2,6 +2,8 @@
 [global]
 size=1g
 bs=512k
+filename=/tmp/fiotest.tmp
+loops=5
 
 ;direct and libaio for engine
 direct=1
