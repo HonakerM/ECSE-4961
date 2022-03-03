@@ -1,0 +1,112 @@
+; -- start job file --
+[global]
+size=1g
+bs=512k
+
+;direct and libaio for engine
+direct=1
+ioengine=libaio
+
+;low q depth equal rw
+[lowq_equal_random]
+rw=randrw
+iodepth=1
+
+[lowq_equal_seq]
+rw=rw
+iodepth=1
+
+; low q depth read heavy
+[lowq_readheavy_random]
+rw=randrw
+iodepth=1
+rwmixread=70
+
+[lowq_readheavy_seq]
+rw=rw
+iodepth=1
+rwmixread=70
+
+
+; low q depth write heavy
+[lowq_readheavy_random]
+rw=randrw
+iodepth=1
+rwmixread=30
+
+[lowq_readheavy_seq]
+rw=rw
+iodepth=1
+rwmixread=30
+
+
+
+
+; medium q depth equal rw
+[mediumq_equal_random]
+rw=randrw
+iodepth=16
+
+[mediumq_equal_seq]
+rw=rw
+iodepth=16
+
+; medium q depth read heavy
+[mediumq_readheavy_random]
+rw=randrw
+iodepth=16
+rwmixread=70
+
+[mediumq_readheavy_seq]
+rw=rw
+iodepth=16
+rwmixread=70
+
+
+; medium q depth write heavy
+[mediumq_readheavy_random]
+rw=randrw
+iodepth=16
+rwmixread=30
+
+[mediumq_readheavy_seq]
+rw=rw
+iodepth=16
+rwmixread=30
+
+
+
+
+; high q depth equal rw
+[highq_equal_random]
+rw=randrw
+iodepth=32
+
+[highq_equal_seq]
+rw=rw
+iodepth=32
+
+; high q depth read heavy
+[highq_readheavy_random]
+rw=randrw
+iodepth=32
+rwmixread=70
+
+[highq_readheavy_seq]
+rw=rw
+iodepth=32
+rwmixread=70
+
+
+; high q depth write heavy
+[highq_readheavy_random]
+rw=randrw
+iodepth=32
+rwmixread=30
+
+[highq_readheavy_seq]
+rw=rw
+iodepth=32
+rwmixread=30
+
+; -- end job file --
