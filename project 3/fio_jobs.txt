@@ -64,12 +64,12 @@ rwmixread=70
 
 
 ; medium q depth write heavy
-[mediumq_readheavy_random]
+[mediumq_writeheavy_random]
 rw=randrw
 iodepth=16
 rwmixread=30
 
-[mediumq_readheavy_seq]
+[mediumq_writeheavy_seq]
 rw=rw
 iodepth=16
 rwmixread=30
@@ -99,12 +99,12 @@ rwmixread=70
 
 
 ; high q depth write heavy
-[highq_readheavy_random]
+[highq_writeheavy_random]
 rw=randrw
 iodepth=32
 rwmixread=30
 
-[highq_readheavy_seq]
+[highq_writeheavy_seq]
 rw=rw
 iodepth=32
 rwmixread=30
