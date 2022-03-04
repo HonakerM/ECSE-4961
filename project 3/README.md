@@ -34,6 +34,12 @@ I will be testing two different storage configurations in this report. The first
 
 ## Storage Results And Analysis
 ### Bandwidth vs IOPS vs Latency 
+![disk iops](results/disk_iops.png)
+![disk latency](results/disk_latency.png)
+![disk iops](results/raid_1_bandwidth.png)
+![disk iops](results/longhorn_bandwidth.png)
+
+
 As you can see in the above graphs as the queue depth grows bandwidth increases, IOPS increase, and also latency increases. While increasing bandwidth and IOPS are a good thing the increase in latency is not. Another thing to notice is that the both drives have a relatively constant average IOPS irregardless of weather they're right focused or read focused; however, longhorn's IOPS did max out around 19 IOPS for a queue depth of both `16` and `32`. And as expected directly writing on the raid 1 is significantly faster but longhorn's uptime might be worth the cost. Both of these drives are significantly slower than the Intel Data Center NVMe SSD D7-P5600. This is most likely due to utilizing SSD technology which has significantly higher IOPS than traditional HDD. The drive also utilizes NVMe which has a peak bandwidth of 32Gbs which is much higher than the SAS drives 6Gbs. The drive is also a enterprise grade caching drive that is designed to maximize for peak IOPS instead of the general purpose HDD drives. 
 
 
@@ -51,5 +57,6 @@ I will be testing 2 different memory configurations the first are two sticks of 
 
 
 ### Memory Results
-
+![memory latency](results/memory_bandwidth.png)
+![memory bandwidth](results/memory_latency.png)
 As you can see in the above to graphs as expected the commercial memory had a significantly higher peak bandwidth than the enterprise dims but that came a a cost of significantly higher latency. The enterprise module was able to deliver its max bandwidth without sacrificing latency. This is most likely due more advance stability and reliability tweaks that the enterprise market normally utilize. 
