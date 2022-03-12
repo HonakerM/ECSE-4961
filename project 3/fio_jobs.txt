@@ -1,7 +1,7 @@
 ; -- start job file --
 [global]
 size=1g
-bs=512k
+bs=4k
 filename=/tmp/fiotest.tmp
 loops=5
 
@@ -31,12 +31,12 @@ rwmixread=70
 
 
 ; low q depth write heavy
-[lowq_readheavy_random]
+[lowq_writeheavy_random]
 rw=randrw
 iodepth=1
 rwmixread=30
 
-[lowq_readheavy_seq]
+[lowq_writeheavy_seq]
 rw=rw
 iodepth=1
 rwmixread=30
