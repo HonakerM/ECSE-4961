@@ -8,6 +8,23 @@
 #define DECODE 2
 #define QUERY 3
 
+bool validate_arguments(int mode, int num_threads, std::string input_file, std::string output_file, std::string query){
+    if(mode == -1){
+        std::cerr<< "Mode must be set. This can be done with either -e, -d, or -c. See bellow for more information" <<std::endl << std::endl; 
+        return false;
+    }
+
+    if(input_file == ""){
+        std::cerr<< "Input file must be set. This can be done with -f. See bellow for more information" <<std::endl << std::endl; 
+        return false;
+    }
+
+    if((mode == ENCODE || mode == DECODE )&& output_file == ""){
+        std::cerr<< "Input file must be set. This can be done with -f. See bellow for more information" <<std::endl << std::endl; 
+        return false;
+    }
+    return true;
+} 
 
 void print_help(std::string command_name){
     std::cerr <<"General usage is " << command_name <<"[-e|-d|-c] -f <source_filename> -o <output_filename> [-t number_of_threads"<<std::endl;
@@ -18,7 +35,6 @@ void print_help(std::string command_name){
     std::cerr<<"-c query | cout how many queries are in file"<<std::endl;
     std::cerr<<"-f filename | source filename for operations"<<std::endl;
     std::cerr<<"-o output_file | output filename for encoding/decoding operationr"<<std::endl;
-
 }
 int main(int argc, char ** argv){
     int opt, mode, num_threads;
@@ -69,34 +85,18 @@ int main(int argc, char ** argv){
         }
     }
 
-    if(mode == -1){
-        std::cerr<< "Mode must be set. This can be done with either -e, -d, or -c. See bellow for more information" <<std::endl << std::endl; 
+    //validate arguments
+    if(!validate_arguments(mode, num_threads, input_file, output_file, query)){
         print_help(argv[0]);
         exit(EXIT_FAILURE);
     }
-
-    if(input_file == ""){
-        std::cerr<< "Input file must be set. This can be done with -f. See bellow for more information" <<std::endl << std::endl; 
-        print_help(argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    if(mode == ENCODE && output_file == ""){
-        std::cerr<< "Input file must be set. This can be done with -f. See bellow for more information" <<std::endl << std::endl; 
-        print_help(argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    std::cout<< mode <<std::endl;
-    std::cout<< input_file <<"|" <<output_file <<"|"<<query <<std::endl;
-    std::cout<< num_threads <<std::endl;
-
-
 
     //create worker
     DictionaryWorker worker = DictionaryWorker(num_threads);
 
     if(mode == ENCODE){
         worker.encode_file(input_file, output_file);
+    } else if (mode == DECODE) {
+        worker.decode_file(input_file, output_file);
     }
 }
