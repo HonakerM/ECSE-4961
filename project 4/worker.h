@@ -25,6 +25,10 @@ typedef std::unordered_map<token_type, std::string> decode_table_type;
 #define FILE_BUFFER_SIZE 1024 * 1024
 #define FILE_DELIMITER "|||||||||||||||"
 
+#define ENCODE 1
+#define DECODE 2
+#define QUERY 3
+
 union CharTokenUnion{
     //the char array will be resized to match the token_type
     char char_data[sizeof(token_type)];
@@ -39,10 +43,10 @@ public:
     ~DictionaryWorker();
 
     //encode functions
-    void encode_file(std::string source_file, std::string output_file);
+    long encode_file(std::string source_file, std::string output_file);
 
     //decode functions
-    void decode_file(std::string encoded_file, std::string decoded_file);
+    long decode_file(std::string encoded_file, std::string decoded_file);
 
     //query functions
     long query_file(std::string encoded_file, std::string search_string);
@@ -52,11 +56,8 @@ public:
 private:
     //private helper functions used to perform the actual encoding/decoding
     void encode_chunk(std::string source_file, long start, long count, std::vector<token_type>* output_stream);
-    long query_chunk(std::string encoded_file, std::string search_string, long start, long count);
+    void query_chunk(std::string encoded_file, std::string search_string, long start, long count, long* output);
     void decode_chunk(std::string file_stream, long start, long count, std::string* output_stream);
-
-    long calculate_worst_case_encoding(long num_of_bytes){return (num_of_bytes/2)*sizeof(token_type);}
-
 
     //hash table functions
     std::stringstream generate_hash_stream();
