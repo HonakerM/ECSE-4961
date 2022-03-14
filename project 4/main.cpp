@@ -1,12 +1,7 @@
 #include "main.h"
-
 #include "worker.h"
 
-
-
-#define ENCODE 1
-#define DECODE 2
-#define QUERY 3
+#include <chrono>
 
 bool validate_arguments(int mode, int num_threads, std::string input_file, std::string output_file, std::string query){
     if(mode == -1){
@@ -27,17 +22,21 @@ bool validate_arguments(int mode, int num_threads, std::string input_file, std::
 } 
 
 void print_help(std::string command_name){
-    std::cerr <<"General usage is " << command_name <<"[-e|-d|-c] -f <source_filename> -o <output_filename> [-t number_of_threads"<<std::endl;
+    std::cerr <<"General usage is " << command_name <<"[-e|-d|-q query] -f <source_filename> -o <output_filename> [-t number_of_threads"<<std::endl;
     std::cerr <<"For more advanced usage see the options bellow"<<std::endl;
     std::cerr<<"-t threads | number of threads to encode" <<std::endl;
     std::cerr<<"-e | signifies encode file operation. This takes preceidence"<<std::endl;
     std::cerr<<"-d | decode file"<<std::endl;
-    std::cerr<<"-c query | cout how many queries are in file"<<std::endl;
+    std::cerr<<"-q query | cout how many queries are in file"<<std::endl;
     std::cerr<<"-f filename | source filename for operations"<<std::endl;
     std::cerr<<"-o output_file | output filename for encoding/decoding operationr"<<std::endl;
+    std::cerr<<"-s  | silent. Won't output any timing information"<<std::endl;
 }
+
+
 int main(int argc, char ** argv){
     int opt, mode, num_threads;
+    bool silent = false;
     std::string input_file = "";
     std::string output_file = "";
     std::string query = "";
@@ -53,9 +52,10 @@ int main(int argc, char ** argv){
     -c query | cout how many queries are in file
 
     -f filename | source filename for operations
-    -o output_file | output filename for encoding/decoding operationr
+    -o output_file | output filename for encoding/decoding operation
+    -s | Silent, Will not output any timing information
     */
-    while ((opt = getopt(argc, argv, "edt:f:o:c:")) != -1) {
+    while ((opt = getopt(argc, argv, "sedt:f:o:q:")) != -1) {
         switch (opt) {
             case 'e':
                 mode = ENCODE;
@@ -63,11 +63,13 @@ int main(int argc, char ** argv){
             case 'd':
                 mode = DECODE;
                 break;
-            case 'c':
+            case 'q':
                 mode = QUERY;
                 query = std::string(optarg);
                 break;
-            
+            case 's':
+                silent = true;
+                break;
             case 'f':
                 input_file = std::string(optarg);
                 break;
@@ -94,9 +96,27 @@ int main(int argc, char ** argv){
     //create worker
     DictionaryWorker worker = DictionaryWorker(num_threads);
 
+
+    auto starttime = std::chrono::high_resolution_clock::now();
+
+    long result = 0;
     if(mode == ENCODE){
-        worker.encode_file(input_file, output_file);
+        result = worker.encode_file(input_file, output_file);
     } else if (mode == DECODE) {
-        worker.decode_file(input_file, output_file);
+        result = worker.decode_file(input_file, output_file);
+    } else if (mode == QUERY) {
+        result = worker.query_file(input_file, query);
+    }
+
+
+    auto endtime = std::chrono::high_resolution_clock::now();
+    auto total_time = (std::chrono::duration_cast<std::chrono::milliseconds>(endtime-starttime)).count();
+
+    if(mode == QUERY){
+        std::cout<<"There were " << result << " occurrences of " <<query << " in the encoded file" << std::endl;
+    }
+
+    if(!silent){
+        std::cout << "The total time was " << total_time <<"ms"<<std::endl;
     }
 }
