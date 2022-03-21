@@ -4,12 +4,15 @@ SHELL := /bin/bash
 default:
 	g++ -std=c++11 -O3 *.cpp -o ./main.o  -pthread
 
+create_data:
+	python3 generate_column_data.py results/Raw-Column-Data.txt 10000 23574717 5 15
+
 test_encode:
 	echo "testing encoding for up to 16 threads"
 	num1=1 ; while [[ $$num1 -le 16 ]] ; do \
 		echo "Testing $$num1 threads"; \
 		num2=1 ; while [[ $$num2 -le 5 ]] ; do \
-			./main.o -e -f files/Large-Size-Column.txt -o /dev/null -t $$num1 ; \
+			./main.o -e -f results/Raw-Column-Data.txt -o /dev/null -t $$num1 ; \
 			((num2 = num2 + 1)) ; \
 		done ; \
 		((num1 = num1 + 1)) ; \
@@ -18,14 +21,14 @@ test_encode:
 
 test_decode:
 	echo "encoding test file"
-	./main.o -e -f files/Large-Size-Column.txt -o files/encoded_data -tm
+	./main.o -e -f results/Raw-Column-Data.txt -o results/encoded_data -tm
 
 
 	echo "testing decoding for up to 16 threads"
 	num1=1 ; while [[ $$num1 -le 16 ]] ; do \
 		echo "Testing $$num1 threads"; \
 		num2=1 ; while [[ $$num2 -le 5 ]] ; do \
-			./main.o -d -f files/encoded_data -o /dev/null -t $$num1 ; \
+			./main.o -d -f results/encoded_data -o /dev/null -t $$num1 ; \
 			((num2 = num2 + 1)) ; \
 		done ; \
 		((num1 = num1 + 1)) ; \
