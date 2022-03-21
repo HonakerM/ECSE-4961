@@ -46,6 +46,7 @@ int main(int argc, char ** argv){
     num_threads = 1;
     /*
     -t threads | number of threads to encode
+    -tm | dynamically get the max aviable amount of threads
 
     -e | signifies encode file operation. This takes preceidence
     -d | decode file
@@ -78,7 +79,13 @@ int main(int argc, char ** argv){
                 break;
 
             case 't':
-                num_threads = atoi(optarg);
+                //if threads is max then reset num_threads
+                if(*optarg == 109){
+                    num_threads = -1;
+                } else {
+                    num_threads = atoi(optarg);
+                }
+
                 break;
 
             default: /* '?' */

@@ -29,13 +29,6 @@ typedef std::unordered_map<token_type, std::string> decode_table_type;
 #define DECODE 2
 #define QUERY 3
 
-union CharTokenUnion{
-    //the char array will be resized to match the token_type
-    char char_data[sizeof(token_type)];
-    token_type raw_data;
-};
-
-
 class DictionaryWorker {
 public:
     DictionaryWorker(int num_of_threads);

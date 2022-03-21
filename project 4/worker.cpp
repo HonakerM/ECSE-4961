@@ -31,12 +31,20 @@ static unsigned long count_bytes(std::ifstream &ifs) {
  * Constructor Functions
  */
 DictionaryWorker::DictionaryWorker(int num_of_threads){
-    //bind num of threads to be atleast 1
+    //if num_of_threads is less 1 then set it to the idle number of threads
     if(num_of_threads<1){
-        encoding_threads=1;
+        encoding_threads=std::thread::hardware_concurrency();
+
+        //if the hardware_concurrency call is disabled then default to 0
+        if(encoding_threads<1){
+            encoding_threads = 1;
+        }
+
+        std::cout << "Setting the number of workers to "<< encoding_threads <<std::endl;
+    } else {
+        encoding_threads = num_of_threads;
     }
 
-    this->encoding_threads = num_of_threads;
     encoding_table = new encode_table_type();
     decoding_table = new decode_table_type();
 
