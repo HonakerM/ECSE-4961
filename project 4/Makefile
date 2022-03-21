@@ -2,11 +2,11 @@
 SHELL := /bin/bash
 
 default:
-	mkdir results
+	mkdir -p results
 	g++ -std=c++11 -O3 *.cpp -o ./main.o  -pthread
 
 create_data:
-	mkdir results
+	mkdir -p results
 	python3 generate_column_data.py results/Raw-Column-Data.txt 10000 23574717 5 15
 
 test_encode:
