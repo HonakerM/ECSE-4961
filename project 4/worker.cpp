@@ -91,6 +91,11 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
         long estimated_bytes_per_worker = num_of_bytes / encoding_threads;
         bytes_per_worker = estimated_bytes_per_worker - (estimated_bytes_per_worker % 4);
         extra_bytes = (estimated_bytes_per_worker % 4) * encoding_threads;
+
+        if(bytes_per_worker%4 != 0 || extra_bytes%4 != 0){
+            std::cerr << "Invalid thread count. exiting" <<std::endl;
+            exit(1);
+        }
     }
 
 
