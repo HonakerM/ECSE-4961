@@ -39,3 +39,19 @@ test_decode:
 		done ; \
 		((num1 = num1 + 1)) ; \
 	done
+
+test_query:
+	echo "encoding test file"
+
+	./main.o -e -f files/Raw-Column-Data.txt -o files/encoded_data -tm
+
+	echo "testing decoding for up to 16 threads"; \
+	search_key=$$(head -n 1 files/Raw-Column-Data.txt); \
+	num1=1 ; while [[ $$num1 -le 16 ]] ; do \
+		echo "Testing $$num1 threads"; \
+		num2=1 ; while [[ $$num2 -le 5 ]] ; do \
+			./main.o -q $$search_key -f files/encoded_data  -t $$num1 ; \
+			((num2 = num2 + 1)) ; \
+		done ; \
+		((num1 = num1 + 1)) ; \
+	done
