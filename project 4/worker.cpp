@@ -31,7 +31,7 @@ static unsigned long count_bytes(std::ifstream &ifs) {
  * Constructor Functions
  */
 DictionaryWorker::DictionaryWorker(int num_of_threads, bool silent){
-    report_timing = !silent;
+    this->report_timing = silent;
 
     //if num_of_threads is less 1 then set it to the idle number of threads
     if(num_of_threads<1){
@@ -165,7 +165,7 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
             output_string_list.push_back(output_string);
         } else if (op == QUERY) {
-            thread_obj = new std::thread(&DictionaryWorker::query_chunk, this, source_file, search_string, start_loc, worker_bytes, output_long); 
+            thread_obj = new std::thread(&DictionaryWorker::query_chunk, this, source_file, output_file, start_loc, worker_bytes, output_long); 
 
             output_long_list.push_back(output_long);
         }
@@ -202,54 +202,57 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
     auto encoding_finish = std::chrono::high_resolution_clock::now();
 
-
-    //open output file
-    std::ofstream ofs(output_file);
-
-    if(op == ENCODE){
-        //Write hashtable into beginning of file
-        ofs << generate_hash_stream().rdbuf();
-        ofs << FILE_DELIMITER << std::endl;
-    }
-
-
-    int output_size; 
-    if(op == ENCODE){
-        output_size = output_token_list.size();
-    } else if (op == DECODE){
-        output_size = output_string_list.size();
-    } else if (op == QUERY){
-        output_size = output_long_list.size();
-    }
-
     long output_total = 0;
 
-    //iterate through all of the thread strings
-    for(int i=0; i<output_size; i++){
-        
+    if(op != QUERY){
+        //open output file
+        std::ofstream ofs(output_file);
+
         if(op == ENCODE){
-            std::vector<token_type>* token_ptr = output_token_list.at(i);
+            //Write hashtable into beginning of file
+            ofs << generate_hash_stream().rdbuf();
+            ofs << FILE_DELIMITER << std::endl;
+        }
 
-            ofs.write(reinterpret_cast<char*>(&token_ptr->at(0)), token_ptr->size()*sizeof(token_type));
 
-            delete token_ptr;
+        int output_size; 
+        if(op == ENCODE){
+            output_size = output_token_list.size();
         } else if (op == DECODE){
-            //get string_obj
-            std::string* string_ptr = output_string_list.at(i);
+            output_size = output_string_list.size();
+        } else if (op == QUERY){
+            output_size = output_long_list.size();
+        }
 
-            //combine all of the thread streams
-            ofs << *string_ptr;
 
-            delete string_ptr;
-        } else if (op == QUERY) {
+        //iterate through all of the thread strings
+        for(int i=0; i<output_size; i++){
+            
+            if(op == ENCODE){
+                std::vector<token_type>* token_ptr = output_token_list.at(i);
+
+                ofs.write(reinterpret_cast<char*>(&token_ptr->at(0)), token_ptr->size()*sizeof(token_type));
+
+                delete token_ptr;
+            } else if (op == DECODE){
+                //get string_obj
+                std::string* string_ptr = output_string_list.at(i);
+
+                //combine all of the thread streams
+                ofs << *string_ptr;
+
+                delete string_ptr;
+            }
+        }
+
+    } else {
+        for(int i=0; i<output_long_list.size(); i++){
             long* long_ptr = output_long_list.at(i);
 
             output_total += *long_ptr;
 
             delete long_ptr;
-
         }
-
     }
 
     auto finish_reading = std::chrono::high_resolution_clock::now();
@@ -278,6 +281,13 @@ long DictionaryWorker::decode_file(std::string source_file, std::string output_f
     return file_op(DECODE, source_file, output_file);
 }
 
+long DictionaryWorker::query_file(std::string source_file, std::string search_string){
+    return file_op(QUERY, source_file, search_string);
+}
+
+/*
+ * Chunk Operations
+ */
 
 void DictionaryWorker::encode_chunk(std::string source_file, long start, long count, std::vector<token_type>* output_stream){
     //open file 
@@ -375,101 +385,6 @@ void DictionaryWorker::decode_chunk(std::string source_file, long start, long co
         (*output_string) += key_string + "\n";
     }
 }
-
-/*
- * Query functions
-*/
-
-
-long DictionaryWorker::query_file(std::string source_file, std::string search_string){
-
-    //open source file
-    std::ifstream ifs( source_file );
-
-    //read hash table from ifstream
-    long data_start_loc = process_hash_stream(ifs);
-    
-    //count the following bytes
-    long num_of_bytes = count_bytes(ifs);
-
-    //align the bytes_per_worker to be divisble by 4
-    //any extra bytes will be assigned to the first worker
-    long estimated_bytes_per_worker = num_of_bytes / encoding_threads;
-    int extra_bytes = (estimated_bytes_per_worker % 4) * encoding_threads;
-    long bytes_per_worker = estimated_bytes_per_worker - (estimated_bytes_per_worker % 4);
-
-
-    std::vector<std::thread*> thread_list;
-    std::vector<long*> thread_output;
-    for(int i=0;i<encoding_threads;i++){
-
-        // create output stream for thread
-        long* output_long = new long;
-
-        // define the workers starting location
-        long start_loc = (data_start_loc+extra_bytes+i*bytes_per_worker);
-        if(i==0){
-            start_loc = data_start_loc;
-        }
-
-        //define rthe number of bytes per worker
-        long worker_bytes = bytes_per_worker;
-
-        //assign the first thread any extra bytes
-        if(i==0){
-            worker_bytes += extra_bytes;
-        }
-
-        //create the thread
-        std::thread* thread_obj = new std::thread(&DictionaryWorker::query_chunk, this, source_file, search_string, start_loc, worker_bytes, output_long); 
-
-        // add items to the vectors
-        thread_list.push_back(thread_obj);
-        thread_output.push_back(output_long);
-    }
-
-    //while some threads are still running
-    while(!thread_list.empty()){
-        
-        //iterate through list of running threads
-        for(int i=0; i < thread_list.size(); i++){
-            //get threading boject
-            std::thread* thread_obj = thread_list.at(i);
-
-            //check if thread is joinable
-            if(thread_obj->joinable()){
-                //delete the thread
-                thread_obj->join();
-
-                //remove it from the thread list
-                thread_list.erase(thread_list.begin() + i);       
-
-                //free thread obj memory
-                delete thread_obj;         
-            }
-
-        }
-    }
-
-    //open output file
-    long output = 0;
-
-    //iterate through all of the thread strings
-    for(int i=0; i<thread_output.size(); i++){
-        //get string pointer
-        long* long_ptr = thread_output.at(i);
-
-        output += *long_ptr;
-
-        //free string memory
-        delete long_ptr;
-
-    }
-
-    return output;
-    
-}
-
 
 void DictionaryWorker::query_chunk(std::string source_file, std::string search_string, long start, long count, long* output){
 

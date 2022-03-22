@@ -101,7 +101,7 @@ int main(int argc, char ** argv){
     }
 
     //create worker
-    DictionaryWorker worker = DictionaryWorker(num_threads, silent);
+    DictionaryWorker worker = DictionaryWorker(num_threads, !silent);
 
 
     auto starttime = std::chrono::high_resolution_clock::now();

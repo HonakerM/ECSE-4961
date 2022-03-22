@@ -11,7 +11,7 @@ debug:
 
 create_data:
 	mkdir -p results
-	python3 generate_column_data.py results/Raw-Column-Data.txt 10000 23574717 5 15
+	python3 generate_column_data.py results/Raw-Column-Data.txt 200000 23574717 5 15
 
 test_encode:
 	echo "testing encoding for up to 16 threads"

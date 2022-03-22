@@ -34,7 +34,7 @@ typedef std::unordered_map<token_type, std::string> decode_table_type;
 
 class DictionaryWorker {
 public:
-    DictionaryWorker(int num_of_threads, bool silent);
+    DictionaryWorker(int num_of_threads, bool report_timing);
     DictionaryWorker(const DictionaryWorker&);
     ~DictionaryWorker();
 
