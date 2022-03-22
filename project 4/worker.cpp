@@ -64,6 +64,8 @@ DictionaryWorker::~DictionaryWorker(){
 }
 
 long DictionaryWorker::file_op(int op, std::string source_file, std::string output_file){
+    auto starttime = std::chrono::high_resolution_clock::now();
+
     //open the source file
     std::ifstream ifs(source_file);
 
@@ -90,6 +92,7 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
     }
 
 
+    auto inital_processing = std::chrono::high_resolution_clock::now();
 
     //define vectors to keep track of each thread and their output
     std::vector<std::thread*> thread_list;
@@ -104,17 +107,24 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
         // create output stream for thread
         if(op == ENCODE){
-            std::vector<token_type>* output_token = new std::vector<token_type>();
+            output_token = new std::vector<token_type>();
         } else if ( op == DECODE){
-                output_string = new std::string();
+            output_string = new std::string();
         }
 
         // define the workers starting location
-        long start_loc = (extra_bytes+i*bytes_per_worker);
-        if(i==0){
-            start_loc = 0;
+        long start_loc;
+        
+        if(op == ENCODE){
+            start_loc = (extra_bytes+i*bytes_per_worker);
+        } else if (op == DECODE){
+            start_loc = (data_start_loc+extra_bytes+i*bytes_per_worker);
         }
+         
 
+        if(i==0){
+            start_loc = data_start_loc;
+        }
 
         //define rthe number of bytes per worker
         long worker_bytes = bytes_per_worker;
@@ -140,6 +150,9 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
         thread_list.push_back(thread_obj);
     }
 
+    auto thread_distribution = std::chrono::high_resolution_clock::now();
+
+
     //while some threads are still running
     while(!thread_list.empty()){
         
@@ -162,6 +175,9 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
         }
     }
+
+    auto encoding_finish = std::chrono::high_resolution_clock::now();
+
 
     //open output file
     std::ofstream ofs(output_file);
@@ -204,94 +220,25 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
     }
 
+    auto finish_reading = std::chrono::high_resolution_clock::now();
+
+    auto inital_processing_time = (std::chrono::duration_cast<std::chrono::milliseconds>(inital_processing-starttime)).count();
+    auto distribute_time = (std::chrono::duration_cast<std::chrono::milliseconds>(thread_distribution-inital_processing)).count();
+    auto encoding_time = (std::chrono::duration_cast<std::chrono::milliseconds>(encoding_finish-thread_distribution)).count();
+    auto writing_time = (std::chrono::duration_cast<std::chrono::milliseconds>(finish_reading-encoding_finish)).count();
+
+
+    std::cout<<"inital_proicessing: "<<inital_processing_time<<" distribute_time:"<<distribute_time<<" encoding_time:"<<encoding_time<<" writing_time:"<<writing_time<<std::endl;
+
     return num_of_bytes;  
 }
 
 long DictionaryWorker::encode_file(std::string source_file, std::string output_file){
-    //open the source file
-    std::ifstream ifs(source_file);
+    return file_op(ENCODE, source_file, output_file);
+}
 
-    //calculate number of bytes and the bytes per worker
-    long num_of_bytes = count_bytes(ifs);
-    long bytes_per_worker = num_of_bytes / encoding_threads;
-
-    //claculate how many bytes that were chopped off
-    int extra_bytes = num_of_bytes - (bytes_per_worker*encoding_threads);
-
-    //define vectors to keep track of each thread and their output
-    std::vector<std::thread*> thread_list;
-    std::vector<std::vector<token_type>*> thread_output_stream;
-
-    for(int i=0;i<encoding_threads;i++){
-        // create output stream for thread
-        std::vector<token_type>* output_char_stream = new std::vector<token_type>();
-
-        // define the workers starting location
-        long start_loc = (extra_bytes+i*bytes_per_worker);
-        if(i==0){
-            start_loc = 0;
-        }
-
-
-        //define rthe number of bytes per worker
-        long worker_bytes = bytes_per_worker;
-
-        //assign the first thread any extra bytes
-        if(i==0){
-            worker_bytes += extra_bytes;
-        }
-        
-        // create thread
-        std::thread* thread_obj = new std::thread(&DictionaryWorker::encode_chunk, this, source_file, start_loc, worker_bytes, output_char_stream); 
-
-        // add items to the vectors
-        thread_list.push_back(thread_obj);
-        thread_output_stream.push_back(output_char_stream);
-    }
-
-    //while some threads are still running
-    while(!thread_list.empty()){
-        
-        //iterate through list of running threads
-        for(int i=0; i < thread_list.size(); i++){
-            //get threading boject
-            std::thread* thread_obj = thread_list.at(i);
-
-            //check if thread is joinable
-            if(thread_obj->joinable()){
-                //delete the thread
-                thread_obj->join();
-
-                //remove it from the thread list
-                thread_list.erase(thread_list.begin() + i);       
-
-                //free thread obj memory
-                delete thread_obj;         
-            }
-
-        }
-    }
-
-    //open output file
-    std::ofstream ofs(output_file);
-
-    //Write hashtable into beginning of file
-    ofs << generate_hash_stream().rdbuf();
-    ofs << FILE_DELIMITER << std::endl;
-
-    
-    //iterate through all of the thread strings
-    for(int i=0; i<thread_output_stream.size(); i++){
-        //get string pointer
-        std::vector<token_type>* output_stream = thread_output_stream.at(i);
-
-        ofs.write(reinterpret_cast<char*>(&output_stream->at(0)), output_stream->size()*sizeof(token_type));
-
-        delete output_stream;
-    }
-
-    return num_of_bytes;    
-
+long DictionaryWorker::decode_file(std::string source_file, std::string output_file){
+    return file_op(DECODE, source_file, output_file);
 }
 
 
@@ -352,98 +299,6 @@ void DictionaryWorker::encode_chunk(std::string source_file, long start, long co
         output_stream->push_back(token);
     }
 
-}
-
-/*
- * Decoding Functions
- */
-
-long DictionaryWorker::decode_file(std::string source_file, std::string output_file){
-    //open source file
-    std::ifstream ifs( source_file );
-
-    //read hash table from ifstream
-    long data_start_loc = process_hash_stream(ifs);
-    
-    //count the following bytes
-    long num_of_bytes = count_bytes(ifs);
-
-    //align the bytes_per_worker to be divisble by 4
-    //any extra bytes will be assigned to the first worker
-    long estimated_bytes_per_worker = num_of_bytes / encoding_threads;
-    int extra_bytes = (estimated_bytes_per_worker % 4) * encoding_threads;
-    long bytes_per_worker = estimated_bytes_per_worker - (estimated_bytes_per_worker % 4);
-
-
-    std::vector<std::thread*> thread_list;
-    std::vector<std::string*> thread_output_string;
-    for(int i=0;i<encoding_threads;i++){
-
-        // create output stream for thread
-        std::string* output_string = new std::string();
-
-        // define the workers starting location
-        long start_loc = (data_start_loc+extra_bytes+i*bytes_per_worker);
-        if(i==0){
-            start_loc = data_start_loc;
-        }
-
-        //define rthe number of bytes per worker
-        long worker_bytes = bytes_per_worker;
-
-        //assign the first thread any extra bytes
-        if(i==0){
-            worker_bytes += extra_bytes;
-        }
-
-        //create the thread
-        std::thread* thread_obj = new std::thread(&DictionaryWorker::decode_chunk, this, source_file, start_loc, worker_bytes, output_string); 
-
-        // add items to the vectors
-        thread_list.push_back(thread_obj);
-        thread_output_string.push_back(output_string);
-    }
-
-    //while some threads are still running
-    while(!thread_list.empty()){
-        
-        //iterate through list of running threads
-        for(int i=0; i < thread_list.size(); i++){
-            //get threading boject
-            std::thread* thread_obj = thread_list.at(i);
-
-            //check if thread is joinable
-            if(thread_obj->joinable()){
-                //delete the thread
-                thread_obj->join();
-
-                //remove it from the thread list
-                thread_list.erase(thread_list.begin() + i);       
-
-                //free thread obj memory
-                delete thread_obj;         
-            }
-
-        }
-    }
-
-    //open output file
-    std::ofstream ofs(output_file);
-    
-    //iterate through all of the thread strings
-    for(int i=0; i<thread_output_string.size(); i++){
-        //get string pointer
-        std::string* string_obj = thread_output_string.at(i);
-
-        //combine all of the thread streams
-        ofs << *string_obj;
-
-        //free string memory
-        delete string_obj;
-
-    }
-
-    return num_of_bytes;    
 }
 
 

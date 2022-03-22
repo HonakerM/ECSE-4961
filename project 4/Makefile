@@ -3,7 +3,11 @@ SHELL := /bin/bash
 
 default:
 	mkdir -p results
-	g++ -std=c++11 -O3 *.cpp -o ./main.o  -pthread
+	g++ -std=c++11 -O3 *.cpp -o ./main.o  -pthread 
+
+debug:
+	mkdir -p results
+	g++ -std=c++11 -g *.cpp -o ./main.o  -pthread -D debug
 
 create_data:
 	mkdir -p results
