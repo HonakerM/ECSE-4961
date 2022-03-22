@@ -1,0 +1,338 @@
+mkdir -p files
+python3 generate_column_data.py files/Raw-Column-Data.txt 200000 23574717 5 15
+generating key list
+generting output file
+echo "testing encoding for up to 16 threads"
+testing encoding for up to 16 threads
+num1=1 ; while [[ $num1 -le 16 ]] ; do \
+	echo "Testing $num1 threads"; \
+	num2=1 ; while [[ $num2 -le 5 ]] ; do \
+		./main.o -e -f files/Raw-Column-Data.txt -o /dev/null -t $num1 ; \
+		((num2 = num2 + 1)) ; \
+	done ; \
+	((num1 = num1 + 1)) ; \
+done
+Testing 1 threads
+inital_proicessing: 40ms thread_startup_time:5ms encoding_time:9504ms writing_time:76ms
+inital_proicessing: 43ms thread_startup_time:0ms encoding_time:9612ms writing_time:49ms
+inital_proicessing: 23ms thread_startup_time:12ms encoding_time:9488ms writing_time:79ms
+inital_proicessing: 53ms thread_startup_time:1ms encoding_time:9429ms writing_time:52ms
+inital_proicessing: 26ms thread_startup_time:0ms encoding_time:9420ms writing_time:71ms
+Testing 2 threads
+inital_proicessing: 24ms thread_startup_time:1ms encoding_time:18180ms writing_time:53ms
+inital_proicessing: 26ms thread_startup_time:12ms encoding_time:17574ms writing_time:54ms
+inital_proicessing: 25ms thread_startup_time:0ms encoding_time:17863ms writing_time:50ms
+inital_proicessing: 25ms thread_startup_time:4ms encoding_time:17589ms writing_time:79ms
+inital_proicessing: 39ms thread_startup_time:1ms encoding_time:17912ms writing_time:50ms
+Testing 3 threads
+inital_proicessing: 27ms thread_startup_time:13ms encoding_time:13525ms writing_time:56ms
+inital_proicessing: 26ms thread_startup_time:0ms encoding_time:13423ms writing_time:53ms
+inital_proicessing: 26ms thread_startup_time:4ms encoding_time:13267ms writing_time:65ms
+inital_proicessing: 27ms thread_startup_time:7ms encoding_time:13363ms writing_time:76ms
+inital_proicessing: 35ms thread_startup_time:2ms encoding_time:13298ms writing_time:54ms
+Testing 4 threads
+inital_proicessing: 26ms thread_startup_time:14ms encoding_time:13333ms writing_time:52ms
+inital_proicessing: 26ms thread_startup_time:12ms encoding_time:13377ms writing_time:57ms
+inital_proicessing: 26ms thread_startup_time:0ms encoding_time:13181ms writing_time:52ms
+inital_proicessing: 25ms thread_startup_time:3ms encoding_time:13580ms writing_time:52ms
+inital_proicessing: 22ms thread_startup_time:2ms encoding_time:13645ms writing_time:55ms
+Testing 5 threads
+inital_proicessing: 25ms thread_startup_time:0ms encoding_time:13409ms writing_time:54ms
+inital_proicessing: 23ms thread_startup_time:14ms encoding_time:13526ms writing_time:55ms
+inital_proicessing: 24ms thread_startup_time:12ms encoding_time:14088ms writing_time:53ms
+inital_proicessing: 30ms thread_startup_time:8ms encoding_time:13870ms writing_time:54ms
+inital_proicessing: 36ms thread_startup_time:10ms encoding_time:13985ms writing_time:53ms
+Testing 6 threads
+inital_proicessing: 35ms thread_startup_time:14ms encoding_time:13539ms writing_time:84ms
+inital_proicessing: 36ms thread_startup_time:13ms encoding_time:13695ms writing_time:62ms
+inital_proicessing: 26ms thread_startup_time:4ms encoding_time:13274ms writing_time:72ms
+inital_proicessing: 34ms thread_startup_time:7ms encoding_time:13438ms writing_time:57ms
+inital_proicessing: 26ms thread_startup_time:14ms encoding_time:13866ms writing_time:54ms
+Testing 7 threads
+inital_proicessing: 25ms thread_startup_time:1ms encoding_time:13414ms writing_time:53ms
+inital_proicessing: 25ms thread_startup_time:0ms encoding_time:13573ms writing_time:53ms
+inital_proicessing: 24ms thread_startup_time:0ms encoding_time:13167ms writing_time:52ms
+inital_proicessing: 25ms thread_startup_time:6ms encoding_time:13326ms writing_time:49ms
+inital_proicessing: 26ms thread_startup_time:12ms encoding_time:13535ms writing_time:54ms
+Testing 8 threads
+inital_proicessing: 33ms thread_startup_time:31ms encoding_time:13875ms writing_time:50ms
+inital_proicessing: 25ms thread_startup_time:15ms encoding_time:12656ms writing_time:58ms
+inital_proicessing: 26ms thread_startup_time:17ms encoding_time:13929ms writing_time:51ms
+inital_proicessing: 25ms thread_startup_time:12ms encoding_time:13389ms writing_time:55ms
+inital_proicessing: 26ms thread_startup_time:8ms encoding_time:13161ms writing_time:65ms
+Testing 9 threads
+inital_proicessing: 32ms thread_startup_time:8ms encoding_time:13726ms writing_time:55ms
+inital_proicessing: 27ms thread_startup_time:1ms encoding_time:13508ms writing_time:48ms
+inital_proicessing: 24ms thread_startup_time:17ms encoding_time:13967ms writing_time:54ms
+inital_proicessing: 25ms thread_startup_time:0ms encoding_time:13157ms writing_time:53ms
+inital_proicessing: 29ms thread_startup_time:14ms encoding_time:13673ms writing_time:50ms
+Testing 10 threads
+inital_proicessing: 26ms thread_startup_time:13ms encoding_time:13526ms writing_time:51ms
+inital_proicessing: 23ms thread_startup_time:18ms encoding_time:14087ms writing_time:50ms
+inital_proicessing: 25ms thread_startup_time:13ms encoding_time:13152ms writing_time:54ms
+inital_proicessing: 25ms thread_startup_time:13ms encoding_time:14002ms writing_time:52ms
+inital_proicessing: 25ms thread_startup_time:15ms encoding_time:13550ms writing_time:58ms
+Testing 11 threads
+inital_proicessing: 24ms thread_startup_time:24ms encoding_time:14015ms writing_time:75ms
+inital_proicessing: 38ms thread_startup_time:6ms encoding_time:14307ms writing_time:56ms
+inital_proicessing: 25ms thread_startup_time:8ms encoding_time:13704ms writing_time:66ms
+inital_proicessing: 26ms thread_startup_time:12ms encoding_time:14400ms writing_time:53ms
+inital_proicessing: 25ms thread_startup_time:20ms encoding_time:13942ms writing_time:80ms
+Testing 12 threads
+inital_proicessing: 25ms thread_startup_time:8ms encoding_time:14509ms writing_time:48ms
+inital_proicessing: 23ms thread_startup_time:21ms encoding_time:14627ms writing_time:63ms
+inital_proicessing: 23ms thread_startup_time:22ms encoding_time:14297ms writing_time:68ms
+inital_proicessing: 23ms thread_startup_time:30ms encoding_time:14233ms writing_time:88ms
+inital_proicessing: 40ms thread_startup_time:7ms encoding_time:14182ms writing_time:53ms
+Testing 13 threads
+inital_proicessing: 25ms thread_startup_time:16ms encoding_time:14085ms writing_time:54ms
+inital_proicessing: 29ms thread_startup_time:12ms encoding_time:14373ms writing_time:54ms
+inital_proicessing: 24ms thread_startup_time:19ms encoding_time:14727ms writing_time:55ms
+inital_proicessing: 26ms thread_startup_time:8ms encoding_time:14588ms writing_time:54ms
+inital_proicessing: 25ms thread_startup_time:12ms encoding_time:14096ms writing_time:74ms
+Testing 14 threads
+inital_proicessing: 26ms thread_startup_time:5ms encoding_time:14454ms writing_time:52ms
+inital_proicessing: 26ms thread_startup_time:11ms encoding_time:14824ms writing_time:71ms
+inital_proicessing: 26ms thread_startup_time:13ms encoding_time:14380ms writing_time:50ms
+inital_proicessing: 38ms thread_startup_time:21ms encoding_time:14393ms writing_time:50ms
+inital_proicessing: 25ms thread_startup_time:16ms encoding_time:14502ms writing_time:52ms
+Testing 15 threads
+inital_proicessing: 25ms thread_startup_time:19ms encoding_time:14410ms writing_time:54ms
+inital_proicessing: 26ms thread_startup_time:13ms encoding_time:14991ms writing_time:81ms
+inital_proicessing: 40ms thread_startup_time:5ms encoding_time:14455ms writing_time:57ms
+inital_proicessing: 26ms thread_startup_time:7ms encoding_time:14956ms writing_time:55ms
+inital_proicessing: 26ms thread_startup_time:8ms encoding_time:15306ms writing_time:52ms
+Testing 16 threads
+inital_proicessing: 25ms thread_startup_time:10ms encoding_time:15306ms writing_time:66ms
+inital_proicessing: 26ms thread_startup_time:10ms encoding_time:14766ms writing_time:57ms
+inital_proicessing: 26ms thread_startup_time:21ms encoding_time:15317ms writing_time:57ms
+inital_proicessing: 34ms thread_startup_time:15ms encoding_time:15234ms writing_time:51ms
+inital_proicessing: 25ms thread_startup_time:8ms encoding_time:15069ms writing_time:51ms
+echo "encoding test file"
+encoding test file
+./main.o -e -f files/Raw-Column-Data.txt -o files/encoded_data -tm
+Setting the number of workers to 4
+inital_proicessing: 38ms thread_startup_time:15ms encoding_time:13532ms writing_time:100ms
+echo "testing decoding for up to 16 threads"
+testing decoding for up to 16 threads
+num1=1 ; while [[ $num1 -le 16 ]] ; do \
+	echo "Testing $num1 threads"; \
+	num2=1 ; while [[ $num2 -le 5 ]] ; do \
+		./main.o -d -f files/encoded_data -o /dev/null -t $num1 ; \
+		((num2 = num2 + 1)) ; \
+	done ; \
+	((num1 = num1 + 1)) ; \
+done
+Testing 1 threads
+inital_proicessing: 57ms thread_startup_time:13ms encoding_time:5085ms writing_time:7ms
+inital_proicessing: 85ms thread_startup_time:0ms encoding_time:5135ms writing_time:6ms
+inital_proicessing: 89ms thread_startup_time:0ms encoding_time:5119ms writing_time:8ms
+inital_proicessing: 59ms thread_startup_time:0ms encoding_time:5145ms writing_time:7ms
+inital_proicessing: 90ms thread_startup_time:15ms encoding_time:5115ms writing_time:7ms
+Testing 2 threads
+inital_proicessing: 59ms thread_startup_time:14ms encoding_time:2651ms writing_time:7ms
+inital_proicessing: 57ms thread_startup_time:17ms encoding_time:3098ms writing_time:6ms
+inital_proicessing: 61ms thread_startup_time:26ms encoding_time:2859ms writing_time:7ms
+inital_proicessing: 54ms thread_startup_time:13ms encoding_time:2708ms writing_time:7ms
+inital_proicessing: 84ms thread_startup_time:5ms encoding_time:2760ms writing_time:7ms
+Testing 3 threads
+inital_proicessing: 55ms thread_startup_time:13ms encoding_time:2547ms writing_time:7ms
+inital_proicessing: 56ms thread_startup_time:11ms encoding_time:2504ms writing_time:7ms
+inital_proicessing: 88ms thread_startup_time:15ms encoding_time:2789ms writing_time:7ms
+inital_proicessing: 54ms thread_startup_time:0ms encoding_time:2628ms writing_time:11ms
+inital_proicessing: 52ms thread_startup_time:16ms encoding_time:2643ms writing_time:7ms
+Testing 4 threads
+inital_proicessing: 82ms thread_startup_time:18ms encoding_time:2552ms writing_time:7ms
+inital_proicessing: 55ms thread_startup_time:12ms encoding_time:2264ms writing_time:10ms
+inital_proicessing: 55ms thread_startup_time:0ms encoding_time:2523ms writing_time:6ms
+inital_proicessing: 66ms thread_startup_time:12ms encoding_time:2460ms writing_time:7ms
+inital_proicessing: 54ms thread_startup_time:10ms encoding_time:2652ms writing_time:8ms
+Testing 5 threads
+Testing 6 threads
+inital_proicessing: 63ms thread_startup_time:27ms encoding_time:2406ms writing_time:6ms
+inital_proicessing: 57ms thread_startup_time:0ms encoding_time:2709ms writing_time:6ms
+inital_proicessing: 74ms thread_startup_time:15ms encoding_time:2377ms writing_time:7ms
+inital_proicessing: 55ms thread_startup_time:12ms encoding_time:2611ms writing_time:7ms
+inital_proicessing: 56ms thread_startup_time:13ms encoding_time:2321ms writing_time:7ms
+Testing 7 threads
+Testing 8 threads
+inital_proicessing: 64ms thread_startup_time:26ms encoding_time:2488ms writing_time:12ms
+inital_proicessing: 77ms thread_startup_time:25ms encoding_time:2580ms writing_time:6ms
+inital_proicessing: 56ms thread_startup_time:48ms encoding_time:2429ms writing_time:10ms
+inital_proicessing: 86ms thread_startup_time:0ms encoding_time:2601ms writing_time:7ms
+inital_proicessing: 52ms thread_startup_time:22ms encoding_time:2319ms writing_time:8ms
+Testing 9 threads
+inital_proicessing: 58ms thread_startup_time:0ms encoding_time:2830ms writing_time:11ms
+inital_proicessing: 53ms thread_startup_time:41ms encoding_time:2315ms writing_time:13ms
+inital_proicessing: 54ms thread_startup_time:28ms encoding_time:2321ms writing_time:7ms
+inital_proicessing: 57ms thread_startup_time:25ms encoding_time:2560ms writing_time:7ms
+inital_proicessing: 56ms thread_startup_time:0ms encoding_time:2600ms writing_time:7ms
+Testing 10 threads
+inital_proicessing: 58ms thread_startup_time:37ms encoding_time:2610ms writing_time:7ms
+inital_proicessing: 60ms thread_startup_time:20ms encoding_time:2741ms writing_time:8ms
+inital_proicessing: 61ms thread_startup_time:5ms encoding_time:2505ms writing_time:7ms
+inital_proicessing: 65ms thread_startup_time:13ms encoding_time:2642ms writing_time:7ms
+inital_proicessing: 56ms thread_startup_time:0ms encoding_time:2418ms writing_time:7ms
+Testing 11 threads
+inital_proicessing: 56ms thread_startup_time:30ms encoding_time:2481ms writing_time:8ms
+inital_proicessing: 57ms thread_startup_time:0ms encoding_time:2703ms writing_time:7ms
+inital_proicessing: 59ms thread_startup_time:8ms encoding_time:2517ms writing_time:7ms
+inital_proicessing: 82ms thread_startup_time:0ms encoding_time:2693ms writing_time:7ms
+inital_proicessing: 68ms thread_startup_time:23ms encoding_time:2575ms writing_time:7ms
+Testing 12 threads
+inital_proicessing: 57ms thread_startup_time:12ms encoding_time:2491ms writing_time:9ms
+inital_proicessing: 90ms thread_startup_time:16ms encoding_time:2591ms writing_time:7ms
+inital_proicessing: 82ms thread_startup_time:15ms encoding_time:2556ms writing_time:8ms
+inital_proicessing: 56ms thread_startup_time:12ms encoding_time:2473ms writing_time:11ms
+inital_proicessing: 74ms thread_startup_time:23ms encoding_time:2791ms writing_time:7ms
+Testing 13 threads
+Testing 14 threads
+Testing 15 threads
+Testing 16 threads
+inital_proicessing: 55ms thread_startup_time:14ms encoding_time:2642ms writing_time:7ms
+inital_proicessing: 57ms thread_startup_time:13ms encoding_time:2674ms writing_time:11ms
+inital_proicessing: 72ms thread_startup_time:0ms encoding_time:2760ms writing_time:6ms
+inital_proicessing: 52ms thread_startup_time:9ms encoding_time:2863ms writing_time:7ms
+inital_proicessing: 55ms thread_startup_time:20ms encoding_time:2522ms writing_time:7ms
+echo "encoding test file"
+encoding test file
+./main.o -e -f files/Raw-Column-Data.txt -o files/encoded_data -tm
+Setting the number of workers to 4
+inital_proicessing: 26ms thread_startup_time:0ms encoding_time:13356ms writing_time:309ms
+echo "testing decoding for up to 16 threads"; \
+search_key=$(head -n 1 files/Raw-Column-Data.txt); \
+num1=1 ; while [[ $num1 -le 16 ]] ; do \
+	echo "Testing $num1 threads"; \
+	num2=1 ; while [[ $num2 -le 5 ]] ; do \
+		./main.o -q $search_key -f files/encoded_data  -t $num1 ; \
+		((num2 = num2 + 1)) ; \
+	done ; \
+	((num1 = num1 + 1)) ; \
+done
+testing decoding for up to 16 threads
+Testing 1 threads
+inital_proicessing: 67ms thread_startup_time:0ms encoding_time:4553ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 83ms thread_startup_time:0ms encoding_time:4398ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 64ms thread_startup_time:11ms encoding_time:4409ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 56ms thread_startup_time:0ms encoding_time:4533ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 59ms thread_startup_time:0ms encoding_time:4460ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 2 threads
+inital_proicessing: 55ms thread_startup_time:0ms encoding_time:2193ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 76ms thread_startup_time:0ms encoding_time:2648ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 82ms thread_startup_time:0ms encoding_time:2870ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 74ms thread_startup_time:0ms encoding_time:2174ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 68ms thread_startup_time:13ms encoding_time:2430ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 3 threads
+inital_proicessing: 54ms thread_startup_time:32ms encoding_time:2240ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 57ms thread_startup_time:31ms encoding_time:2277ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 50ms thread_startup_time:13ms encoding_time:2141ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 57ms thread_startup_time:47ms encoding_time:1818ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 57ms thread_startup_time:25ms encoding_time:2260ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 4 threads
+inital_proicessing: 69ms thread_startup_time:8ms encoding_time:1987ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 55ms thread_startup_time:10ms encoding_time:2273ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 55ms thread_startup_time:16ms encoding_time:2124ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 55ms thread_startup_time:25ms encoding_time:2010ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 70ms thread_startup_time:30ms encoding_time:1937ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 5 threads
+Testing 6 threads
+inital_proicessing: 55ms thread_startup_time:18ms encoding_time:2169ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 66ms thread_startup_time:14ms encoding_time:2070ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 57ms thread_startup_time:0ms encoding_time:1945ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 77ms thread_startup_time:25ms encoding_time:2093ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 59ms thread_startup_time:25ms encoding_time:2063ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 7 threads
+Testing 8 threads
+inital_proicessing: 54ms thread_startup_time:20ms encoding_time:2238ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 58ms thread_startup_time:0ms encoding_time:2172ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 70ms thread_startup_time:36ms encoding_time:1896ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 56ms thread_startup_time:12ms encoding_time:1939ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 56ms thread_startup_time:10ms encoding_time:1957ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 9 threads
+inital_proicessing: 55ms thread_startup_time:15ms encoding_time:2227ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 55ms thread_startup_time:0ms encoding_time:1975ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 61ms thread_startup_time:40ms encoding_time:1970ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 81ms thread_startup_time:0ms encoding_time:2055ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 57ms thread_startup_time:13ms encoding_time:2043ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 10 threads
+inital_proicessing: 71ms thread_startup_time:39ms encoding_time:2076ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 58ms thread_startup_time:14ms encoding_time:1890ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 57ms thread_startup_time:28ms encoding_time:1901ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 51ms thread_startup_time:26ms encoding_time:1910ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 60ms thread_startup_time:25ms encoding_time:2035ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 11 threads
+inital_proicessing: 60ms thread_startup_time:14ms encoding_time:2169ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 77ms thread_startup_time:32ms encoding_time:1849ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 55ms thread_startup_time:0ms encoding_time:1917ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 70ms thread_startup_time:13ms encoding_time:1978ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 56ms thread_startup_time:14ms encoding_time:2220ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 12 threads
+inital_proicessing: 52ms thread_startup_time:31ms encoding_time:2084ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 56ms thread_startup_time:12ms encoding_time:2105ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 53ms thread_startup_time:0ms encoding_time:1938ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 53ms thread_startup_time:17ms encoding_time:2065ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 64ms thread_startup_time:14ms encoding_time:2038ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+Testing 13 threads
+Testing 14 threads
+Testing 15 threads
+Testing 16 threads
+inital_proicessing: 59ms thread_startup_time:4ms encoding_time:1969ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 59ms thread_startup_time:19ms encoding_time:1991ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 52ms thread_startup_time:30ms encoding_time:1858ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 55ms thread_startup_time:19ms encoding_time:2118ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
+inital_proicessing: 57ms thread_startup_time:15ms encoding_time:1910ms writing_time:0ms
+There were 131 occurrences of KckDeSboNE in the encoded file
