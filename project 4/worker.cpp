@@ -31,12 +31,20 @@ static unsigned long count_bytes(std::ifstream &ifs) {
  * Constructor Functions
  */
 DictionaryWorker::DictionaryWorker(int num_of_threads){
-    //bind num of threads to be atleast 1
+    //if num_of_threads is less 1 then set it to the idle number of threads
     if(num_of_threads<1){
-        encoding_threads=1;
+        encoding_threads=std::thread::hardware_concurrency();
+
+        //if the hardware_concurrency call is disabled then default to 0
+        if(encoding_threads<1){
+            encoding_threads = 1;
+        }
+
+        std::cout << "Setting the number of workers to "<< encoding_threads <<std::endl;
+    } else {
+        encoding_threads = num_of_threads;
     }
 
-    this->encoding_threads = num_of_threads;
     encoding_table = new encode_table_type();
     decoding_table = new decode_table_type();
 
@@ -55,6 +63,146 @@ DictionaryWorker::~DictionaryWorker(){
     delete decoding_table;
 }
 
+long DictionaryWorker::file_op(int op, std::string source_file, std::string output_file){
+    //open the source file
+    std::ifstream ifs(source_file);
+
+    long data_start_loc = 0;
+    if(op == DECODE){
+       data_start_loc = process_hash_stream(ifs);
+    }
+
+    //calculate number of bytes and the bytes per worker
+    long num_of_bytes = count_bytes(ifs);
+
+    long bytes_per_worker;
+    int extra_bytes;
+
+    if(op == ENCODE){
+        bytes_per_worker = num_of_bytes / encoding_threads;
+
+        //claculate how many bytes that were chopped off
+        extra_bytes = num_of_bytes - (bytes_per_worker*encoding_threads);
+    } else if (op == DECODE){
+        long estimated_bytes_per_worker = num_of_bytes / encoding_threads;
+        bytes_per_worker = estimated_bytes_per_worker - (estimated_bytes_per_worker % 4);
+        extra_bytes = (estimated_bytes_per_worker % 4) * encoding_threads;
+    }
+
+
+
+    //define vectors to keep track of each thread and their output
+    std::vector<std::thread*> thread_list;
+
+
+    std::vector<std::vector<token_type>*> output_token_list;
+    std::vector<std::string*> output_string_list;
+
+    std::vector<token_type>* output_token;
+    std::string* output_string;
+    for(int i=0;i<encoding_threads;i++){
+
+        // create output stream for thread
+        if(op == ENCODE){
+            std::vector<token_type>* output_token = new std::vector<token_type>();
+        } else if ( op == DECODE){
+                output_string = new std::string();
+        }
+
+        // define the workers starting location
+        long start_loc = (extra_bytes+i*bytes_per_worker);
+        if(i==0){
+            start_loc = 0;
+        }
+
+
+        //define rthe number of bytes per worker
+        long worker_bytes = bytes_per_worker;
+
+        //assign the first thread any extra bytes
+        if(i==0){
+            worker_bytes += extra_bytes;
+        }
+        
+        // create thread
+        std::thread* thread_obj;
+        if(op == ENCODE){
+            thread_obj = new std::thread(&DictionaryWorker::encode_chunk, this, source_file, start_loc, worker_bytes, output_token); 
+        
+            output_token_list.push_back(output_token);
+        } else if (op == DECODE) {
+            thread_obj = new std::thread(&DictionaryWorker::decode_chunk, this, source_file, start_loc, worker_bytes, output_string); 
+
+            output_string_list.push_back(output_string);
+        }
+
+        // add items to the vectors
+        thread_list.push_back(thread_obj);
+    }
+
+    //while some threads are still running
+    while(!thread_list.empty()){
+        
+        //iterate through list of running threads
+        for(int i=0; i < thread_list.size(); i++){
+            //get threading boject
+            std::thread* thread_obj = thread_list.at(i);
+
+            //check if thread is joinable
+            if(thread_obj->joinable()){
+                //delete the thread
+                thread_obj->join();
+
+                //remove it from the thread list
+                thread_list.erase(thread_list.begin() + i);       
+
+                //free thread obj memory
+                delete thread_obj;         
+            }
+
+        }
+    }
+
+    //open output file
+    std::ofstream ofs(output_file);
+
+    if(op == ENCODE){
+        //Write hashtable into beginning of file
+        ofs << generate_hash_stream().rdbuf();
+        ofs << FILE_DELIMITER << std::endl;
+    }
+
+
+    int output_size; 
+    if(op == ENCODE){
+        output_size = output_token_list.size();
+    } else {
+        output_size = output_string_list.size();
+    }  
+
+    //iterate through all of the thread strings
+    for(int i=0; i<output_size; i++){
+        void* pointer_obj = nullptr;
+        
+        if(op == ENCODE){
+            std::vector<token_type>* output_stream = output_token_list.at(i);
+            pointer_obj = (void*)output_stream;
+
+            ofs.write(reinterpret_cast<char*>(&output_stream->at(0)), output_stream->size()*sizeof(token_type));
+        } else if (op == DECODE){
+            //get string pointer
+            std::string* string_obj = output_string_list.at(i);
+            pointer_obj = (void*)string_obj;
+
+            //combine all of the thread streams
+            ofs << *string_obj;
+        } 
+
+        delete pointer_obj;
+    }
+
+    return num_of_bytes;  
+}
 
 long DictionaryWorker::encode_file(std::string source_file, std::string output_file){
     //open the source file
