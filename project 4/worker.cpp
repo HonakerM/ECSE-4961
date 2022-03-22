@@ -72,7 +72,7 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
     std::ifstream ifs(source_file);
 
     long data_start_loc = 0;
-    if(op == DECODE){
+    if(op == DECODE || op == QUERY){
        data_start_loc = process_hash_stream(ifs);
     }
 
@@ -87,7 +87,7 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
         //claculate how many bytes that were chopped off
         extra_bytes = num_of_bytes - (bytes_per_worker*encoding_threads);
-    } else if (op == DECODE){
+    } else if (op == DECODE || op == QUERY){
         long estimated_bytes_per_worker = num_of_bytes / encoding_threads;
         bytes_per_worker = estimated_bytes_per_worker - (estimated_bytes_per_worker % 4);
         extra_bytes = (estimated_bytes_per_worker % 4) * encoding_threads;
@@ -100,11 +100,22 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
     std::vector<std::thread*> thread_list;
 
 
+
+    //allocate a vector for all possible options
+    //this is primarily for compiler warnings due to void *
+    //the overhead is marginable
     std::vector<std::vector<token_type>*> output_token_list;
     std::vector<std::string*> output_string_list;
+    std::vector<long*> output_long_list;
 
+
+    //similar situation as above
     std::vector<token_type>* output_token;
     std::string* output_string;
+    long* output_long;
+
+    std::string search_string = "";
+
     for(int i=0;i<encoding_threads;i++){
 
         // create output stream for thread
@@ -112,6 +123,8 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
             output_token = new std::vector<token_type>();
         } else if ( op == DECODE){
             output_string = new std::string();
+        } else if( op == QUERY){
+            output_long = new long;
         }
 
         // define the workers starting location
@@ -119,7 +132,7 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
         
         if(op == ENCODE){
             start_loc = (extra_bytes+i*bytes_per_worker);
-        } else if (op == DECODE){
+        } else if (op == DECODE || op == QUERY){
             start_loc = (data_start_loc+extra_bytes+i*bytes_per_worker);
         }
          
@@ -146,6 +159,10 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
             thread_obj = new std::thread(&DictionaryWorker::decode_chunk, this, source_file, start_loc, worker_bytes, output_string); 
 
             output_string_list.push_back(output_string);
+        } else if (op == QUERY) {
+            thread_obj = new std::thread(&DictionaryWorker::query_chunk, this, source_file, search_string, start_loc, worker_bytes, output_long); 
+
+            output_long_list.push_back(output_long);
         }
 
         // add items to the vectors
@@ -194,29 +211,37 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
     int output_size; 
     if(op == ENCODE){
         output_size = output_token_list.size();
-    } else {
+    } else if (op == DECODE){
         output_size = output_string_list.size();
-    }  
+    } else if (op == QUERY){
+        output_size = output_long_list.size();
+    }
+
+    long output_total = 0;
 
     //iterate through all of the thread strings
     for(int i=0; i<output_size; i++){
         
         if(op == ENCODE){
-            std::vector<token_type>* output_stream = output_token_list.at(i);
+            std::vector<token_type>* token_ptr = output_token_list.at(i);
 
-            ofs.write(reinterpret_cast<char*>(&output_stream->at(0)), output_stream->size()*sizeof(token_type));
+            ofs.write(reinterpret_cast<char*>(&token_ptr->at(0)), token_ptr->size()*sizeof(token_type));
 
-            delete output_stream;
+            delete token_ptr;
         } else if (op == DECODE){
             //get string_obj
-            std::string* string_obj = output_string_list.at(i);
+            std::string* string_ptr = output_string_list.at(i);
 
             //combine all of the thread streams
-            ofs << *string_obj;
+            ofs << *string_ptr;
 
-            delete string_obj;
-        } else {
-            std::string* string_obj = output_string_list.at(i);
+            delete string_ptr;
+        } else if (op == QUERY) {
+            long* long_ptr = output_long_list.at(i);
+
+            output_total += *long_ptr;
+
+            delete long_ptr;
 
         }
 
@@ -233,7 +258,11 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
         std::cout<<"inital_proicessing: "<<inital_processing_time<<"ms thread_startup_time:"<<distribute_time<<"ms encoding_time:"<<encoding_time<<"ms writing_time:"<<writing_time<<"ms"<<std::endl;
     }
 
-    return num_of_bytes;  
+    if(op == QUERY){
+        return output_total;
+    } else {
+        return num_of_bytes;
+    }
 }
 
 long DictionaryWorker::encode_file(std::string source_file, std::string output_file){
