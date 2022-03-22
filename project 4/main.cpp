@@ -101,7 +101,7 @@ int main(int argc, char ** argv){
     }
 
     //create worker
-    DictionaryWorker worker = DictionaryWorker(num_threads);
+    DictionaryWorker worker = DictionaryWorker(num_threads, silent);
 
 
     auto starttime = std::chrono::high_resolution_clock::now();
@@ -123,7 +123,4 @@ int main(int argc, char ** argv){
         std::cout<<"There were " << result << " occurrences of " <<query << " in the encoded file" << std::endl;
     }
 
-    if(!silent){
-        std::cout << "The total time was " << total_time <<"ms"<<std::endl;
-    }
 }

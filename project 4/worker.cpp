@@ -30,7 +30,9 @@ static unsigned long count_bytes(std::ifstream &ifs) {
 /*
  * Constructor Functions
  */
-DictionaryWorker::DictionaryWorker(int num_of_threads){
+DictionaryWorker::DictionaryWorker(int num_of_threads, bool silent){
+    report_timing = !silent;
+
     //if num_of_threads is less 1 then set it to the idle number of threads
     if(num_of_threads<1){
         encoding_threads=std::thread::hardware_concurrency();
@@ -227,8 +229,9 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
     auto encoding_time = (std::chrono::duration_cast<std::chrono::milliseconds>(encoding_finish-thread_distribution)).count();
     auto writing_time = (std::chrono::duration_cast<std::chrono::milliseconds>(finish_reading-encoding_finish)).count();
 
-
-    std::cout<<"inital_proicessing: "<<inital_processing_time<<" distribute_time:"<<distribute_time<<" encoding_time:"<<encoding_time<<" writing_time:"<<writing_time<<std::endl;
+    if(report_timing){
+        std::cout<<"inital_proicessing: "<<inital_processing_time<<"ms thread_startup_time:"<<distribute_time<<"ms encoding_time:"<<encoding_time<<"ms writing_time:"<<writing_time<<"ms"<<std::endl;
+    }
 
     return num_of_bytes;  
 }

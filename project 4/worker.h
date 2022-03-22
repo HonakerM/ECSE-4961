@@ -34,7 +34,7 @@ typedef std::unordered_map<token_type, std::string> decode_table_type;
 
 class DictionaryWorker {
 public:
-    DictionaryWorker(int num_of_threads);
+    DictionaryWorker(int num_of_threads, bool silent);
     DictionaryWorker(const DictionaryWorker&);
     ~DictionaryWorker();
 
@@ -65,7 +65,7 @@ private:
 
 
     int encoding_threads;
-
+    bool report_timing;
 
     //only the encoding table needs a mutex
     //as read operations are atomic for decoding
