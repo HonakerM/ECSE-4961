@@ -2,15 +2,15 @@
 SHELL := /bin/bash
 
 default:
-	mkdir -p results
+	mkdir -p files
 	g++ -std=c++11 -O3 *.cpp -o ./main.o  -pthread 
 
 debug:
-	mkdir -p results
+	mkdir -p files
 	g++ -std=c++11 -g *.cpp -o ./main.o  -pthread -D debug
 
 create_data:
-	mkdir -p results
+	mkdir -p files
 	python3 generate_column_data.py files/Raw-Column-Data.txt 200000 23574717 5 15
 
 test_encode:
