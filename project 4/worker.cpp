@@ -182,23 +182,26 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
     //iterate through all of the thread strings
     for(int i=0; i<output_size; i++){
-        void* pointer_obj = nullptr;
         
         if(op == ENCODE){
             std::vector<token_type>* output_stream = output_token_list.at(i);
-            pointer_obj = (void*)output_stream;
 
             ofs.write(reinterpret_cast<char*>(&output_stream->at(0)), output_stream->size()*sizeof(token_type));
+
+            delete output_stream;
         } else if (op == DECODE){
-            //get string pointer
+            //get string_obj
             std::string* string_obj = output_string_list.at(i);
-            pointer_obj = (void*)string_obj;
 
             //combine all of the thread streams
             ofs << *string_obj;
-        } 
 
-        delete pointer_obj;
+            delete string_obj;
+        } else {
+            std::string* string_obj = output_string_list.at(i);
+
+        }
+
     }
 
     return num_of_bytes;  
