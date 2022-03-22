@@ -10,6 +10,9 @@
 #include <thread>
 #include <mutex>
 
+//timing libraries
+#include <chrono>
+
 //include for hast ables
 #include <unordered_map>
 #include <vector>
@@ -34,6 +37,10 @@ public:
     DictionaryWorker(int num_of_threads);
     DictionaryWorker(const DictionaryWorker&);
     ~DictionaryWorker();
+
+    //generic operations
+    long file_op(int operation, std::string source_file, std::string output_file);
+
 
     //encode functions
     long encode_file(std::string source_file, std::string output_file);
