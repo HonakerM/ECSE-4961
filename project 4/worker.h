@@ -18,6 +18,11 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <cstring>
+
+
+//simd libraries
+#include <emmintrin.h>
 
 //types and defines requierd by DictionaryWorker
 typedef unsigned int token_type;
@@ -32,6 +37,11 @@ typedef std::unordered_map<token_type, std::string> decode_table_type;
 #define DECODE 2
 #define QUERY 3
 
+//define batch length
+// 4 for sse
+// 8 for avx
+#define SIMD_BATCH_SIZE 4
+
 class DictionaryWorker {
 public:
     DictionaryWorker(int num_of_threads, bool report_timing);
@@ -39,29 +49,29 @@ public:
     ~DictionaryWorker();
 
     //generic operations
-    long file_op(int operation, std::string source_file, std::string output_file);
+    int file_op(int operation, std::string source_file, std::string output_file);
 
 
     //encode functions
-    long encode_file(std::string source_file, std::string output_file);
+    int encode_file(std::string source_file, std::string output_file);
 
     //decode functions
-    long decode_file(std::string encoded_file, std::string decoded_file);
+    int decode_file(std::string encoded_file, std::string decoded_file);
 
     //query functions
-    long query_file(std::string encoded_file, std::string search_string);
+    int query_file(std::string encoded_file, std::string search_string);
 
 
 
 private:
     //private helper functions used to perform the actual encoding/decoding
-    void encode_chunk(std::string source_file, long start, long count, std::vector<token_type>* output_stream);
-    void query_chunk(std::string encoded_file, std::string search_string, long start, long count, long* output);
-    void decode_chunk(std::string file_stream, long start, long count, std::string* output_stream);
+    void encode_chunk(std::string source_file, int start, int count, std::vector<token_type>* output_stream);
+    void query_chunk(std::string encoded_file, std::string search_string, int start, int count, int* output);
+    void decode_chunk(std::string file_stream, int start, int count, std::string* output_stream);
 
     //hash table functions
     std::stringstream generate_hash_stream();
-    long process_hash_stream(std::ifstream& stream);
+    int process_hash_stream(std::ifstream& stream);
 
 
     int encoding_threads;

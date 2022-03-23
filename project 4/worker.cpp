@@ -7,9 +7,9 @@
 
 //adapted from https://stackoverflow.com/questions/843154/fastest-way-to-find-the-number-of-lines-in-a-text-c
 //count the number of bytes left in a ifstream
-static unsigned long count_bytes(std::ifstream &ifs) {
+static unsigned int count_bytes(std::ifstream &ifs) {
     std::vector <char> buff( FILE_BUFFER_SIZE );
-    unsigned long n = 0;
+    unsigned int n = 0;
     int buffer_count = 0;
 
     while(true){
@@ -21,10 +21,57 @@ static unsigned long count_bytes(std::ifstream &ifs) {
         }
 
         n += buffer_count;
-
     }
 
     return n;
+}
+
+extern "C" {
+    
+    //
+    static unsigned int compute_simd_sum(int* array, int size){
+
+        int mem_size = size;
+        if(size % SIMD_BATCH_SIZE != 0){
+            mem_size += size % SIMD_BATCH_SIZE;
+        }
+
+        int* buffered_array = (int*)malloc(mem_size);
+        memcpy(buffered_array, array, size*sizeof(int));
+
+        //
+        for(int i=0; i < mem_size-size; i++){
+            buffered_array[size + i] = 0;
+        }
+
+
+        // define output
+        __m128i sum = _mm_setzero_si128();
+
+        for(uint i=0; i < size; i += SIMD_BATCH_SIZE){
+            __m128i reg;
+
+            //load values into registers
+            reg = _mm_loadu_si128 ( (__m128i*)&buffered_array[i] );
+
+            //add the dotproduct to the sum accumulator
+            sum = _mm_add_epi32 ( sum , reg );
+        }
+
+        //
+        int* returned_vector = (int*)malloc(SIMD_BATCH_SIZE*sizeof(int));
+        _mm_store_si128((__m128i*)&returned_vector, sum);
+
+
+        //compute the verticle sum of the final vector
+        int total_sum = 0;
+        for(int i=0; i < SIMD_BATCH_SIZE; i++){
+            total_sum += returned_vector[i];
+        }
+
+        //return the vertical sum
+        return total_sum;
+    }
 }
 
 /*
@@ -65,39 +112,51 @@ DictionaryWorker::~DictionaryWorker(){
     delete decoding_table;
 }
 
-long DictionaryWorker::file_op(int op, std::string source_file, std::string output_file){
+int DictionaryWorker::file_op(int op, std::string source_file, std::string output_file){
     auto starttime = std::chrono::high_resolution_clock::now();
 
     //open the source file
     std::ifstream ifs(source_file);
 
-    long data_start_loc = 0;
+    //confirm that the stream was opened correctly
+    if(!ifs.is_open()){
+        std::cerr<<"The file: "<<source_file <<" could not be opened"<<std::endl;
+        exit(1);
+    }
+
+
+    //process any required metadata
+    int data_start_loc = 0;
     if(op == DECODE || op == QUERY){
        data_start_loc = process_hash_stream(ifs);
     }
 
-    //calculate number of bytes and the bytes per worker
-    long num_of_bytes = count_bytes(ifs);
+    //calculate number of bytes of data to process 
+    int num_of_bytes = count_bytes(ifs);
 
-    long bytes_per_worker;
+    //calcualte the bytes per worker and the number of extra bytes
+    int bytes_per_worker;
     int extra_bytes;
-
     if(op == ENCODE){
+        //encoding offset is handled by the encode_chunk
         bytes_per_worker = num_of_bytes / encoding_threads;
 
-        //claculate how many bytes that were chopped off
+        //claculate how many bytes that were chopped off by rounding
         extra_bytes = num_of_bytes - (bytes_per_worker*encoding_threads);
     } else if (op == DECODE || op == QUERY){
-        long estimated_bytes_per_worker = num_of_bytes / encoding_threads;
+        //estimate the number of bytes per worker
+        int estimated_bytes_per_worker = num_of_bytes / encoding_threads;
+
+        //align each worker by 4 bytes for decoding
         bytes_per_worker = estimated_bytes_per_worker - (estimated_bytes_per_worker % 4);
         extra_bytes = (estimated_bytes_per_worker % 4) * encoding_threads;
 
+        //if alignment isn't possible with this thread count then exit
         if(bytes_per_worker%4 != 0 || extra_bytes%4 != 0){
             std::cerr << "Invalid thread count. exiting" <<std::endl;
             exit(1);
         }
     }
-
 
     auto inital_processing = std::chrono::high_resolution_clock::now();
 
@@ -111,14 +170,13 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
     //the overhead is marginable
     std::vector<std::vector<token_type>*> output_token_list;
     std::vector<std::string*> output_string_list;
-    std::vector<long*> output_long_list;
-
+    int* int_list = (int*)calloc(encoding_threads,sizeof(int));
+    int int_size = encoding_threads;
 
     //similar situation as above
     std::vector<token_type>* output_token;
     std::string* output_string;
-    long* output_long;
-
+    int* output_int;
     std::string search_string = "";
 
     for(int i=0;i<encoding_threads;i++){
@@ -129,11 +187,11 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
         } else if ( op == DECODE){
             output_string = new std::string();
         } else if( op == QUERY){
-            output_long = new long;
+            output_int = &int_list[i];
         }
 
         // define the workers starting location
-        long start_loc;
+        int start_loc;
         
         if(op == ENCODE){
             start_loc = (extra_bytes+i*bytes_per_worker);
@@ -147,7 +205,7 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
         }
 
         //define rthe number of bytes per worker
-        long worker_bytes = bytes_per_worker;
+        int worker_bytes = bytes_per_worker;
 
         //assign the first thread any extra bytes
         if(i==0){
@@ -165,9 +223,9 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
             output_string_list.push_back(output_string);
         } else if (op == QUERY) {
-            thread_obj = new std::thread(&DictionaryWorker::query_chunk, this, source_file, output_file, start_loc, worker_bytes, output_long); 
 
-            output_long_list.push_back(output_long);
+            thread_obj = new std::thread(&DictionaryWorker::query_chunk, this, source_file, output_file, start_loc, worker_bytes,output_int); 
+
         }
 
         // add items to the vectors
@@ -202,31 +260,24 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
 
     auto encoding_finish = std::chrono::high_resolution_clock::now();
 
-    long output_total = 0;
+    int return_number = 0;
 
+    //query does not require writing to a file so its handled elsewhere
     if(op != QUERY){
+
         //open output file
         std::ofstream ofs(output_file);
 
+        //if encoded then output the hash
         if(op == ENCODE){
             //Write hashtable into beginning of file
             ofs << generate_hash_stream().rdbuf();
             ofs << FILE_DELIMITER << std::endl;
         }
 
-
-        int output_size; 
-        if(op == ENCODE){
-            output_size = output_token_list.size();
-        } else if (op == DECODE){
-            output_size = output_string_list.size();
-        } else if (op == QUERY){
-            output_size = output_long_list.size();
-        }
-
-
+        
         //iterate through all of the thread strings
-        for(int i=0; i<output_size; i++){
+        for(int i=0; i<encoding_threads; i++){
             
             if(op == ENCODE){
                 std::vector<token_type>* token_ptr = output_token_list.at(i);
@@ -245,18 +296,26 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
             }
         }
 
+        return_number = num_of_bytes;
+
     } else {
-        for(int i=0; i<output_long_list.size(); i++){
-            long* long_ptr = output_long_list.at(i);
+        //I implemented this addition in simd only to realize
+        // that int_size is just encoding_threads so there is no
+        //benifit to using sse
 
-            output_total += *long_ptr;
 
-            delete long_ptr;
+        //return_number = compute_simd_sum(int_list, int_size);
+        for(int i=0; i<int_size; i++){
+            int int_ptr = int_list[i];
+
+            return_number += int_ptr;
         }
+        delete(int_list);
     }
 
-    auto finish_reading = std::chrono::high_resolution_clock::now();
 
+    //calculate timing information
+    auto finish_reading = std::chrono::high_resolution_clock::now();
     auto inital_processing_time = (std::chrono::duration_cast<std::chrono::milliseconds>(inital_processing-starttime)).count();
     auto distribute_time = (std::chrono::duration_cast<std::chrono::milliseconds>(thread_distribution-inital_processing)).count();
     auto encoding_time = (std::chrono::duration_cast<std::chrono::milliseconds>(encoding_finish-thread_distribution)).count();
@@ -266,22 +325,19 @@ long DictionaryWorker::file_op(int op, std::string source_file, std::string outp
         std::cout<<"inital_proicessing: "<<inital_processing_time<<"ms thread_startup_time:"<<distribute_time<<"ms encoding_time:"<<encoding_time<<"ms writing_time:"<<writing_time<<"ms"<<std::endl;
     }
 
-    if(op == QUERY){
-        return output_total;
-    } else {
-        return num_of_bytes;
-    }
+    //return the number
+    return return_number;
 }
 
-long DictionaryWorker::encode_file(std::string source_file, std::string output_file){
+int DictionaryWorker::encode_file(std::string source_file, std::string output_file){
     return file_op(ENCODE, source_file, output_file);
 }
 
-long DictionaryWorker::decode_file(std::string source_file, std::string output_file){
+int DictionaryWorker::decode_file(std::string source_file, std::string output_file){
     return file_op(DECODE, source_file, output_file);
 }
 
-long DictionaryWorker::query_file(std::string source_file, std::string search_string){
+int DictionaryWorker::query_file(std::string source_file, std::string search_string){
     return file_op(QUERY, source_file, search_string);
 }
 
@@ -289,7 +345,7 @@ long DictionaryWorker::query_file(std::string source_file, std::string search_st
  * Chunk Operations
  */
 
-void DictionaryWorker::encode_chunk(std::string source_file, long start, long count, std::vector<token_type>* output_stream){
+void DictionaryWorker::encode_chunk(std::string source_file, int start, int count, std::vector<token_type>* output_stream){
     //open file 
     std::ifstream ifs( source_file );
 
@@ -309,10 +365,12 @@ void DictionaryWorker::encode_chunk(std::string source_file, long start, long co
        }
     } 
 
-    //start current ilne
-    long bytes_read = 0;
+    //helper variables 
+    int bytes_read = 0;
     std::string key_string;
     token_type token;
+
+
     while(bytes_read < count && std::getline(ifs, key_string)){
         // get number of bytes read 
         // add 1 due to the new line character
@@ -349,7 +407,7 @@ void DictionaryWorker::encode_chunk(std::string source_file, long start, long co
 }
 
 
-void DictionaryWorker::decode_chunk(std::string source_file, long start, long count, std::string* output_string){
+void DictionaryWorker::decode_chunk(std::string source_file, int start, int count, std::string* output_string){
     //open file 
     std::ifstream ifs( source_file );
 
@@ -357,7 +415,7 @@ void DictionaryWorker::decode_chunk(std::string source_file, long start, long co
     ifs.seekg(start);
 
     //start current ilne
-    long bytes_read = 0;
+    int bytes_read = 0;
     std::string key_string;
     char token_buffer; 
     token_type token;
@@ -386,7 +444,7 @@ void DictionaryWorker::decode_chunk(std::string source_file, long start, long co
     }
 }
 
-void DictionaryWorker::query_chunk(std::string source_file, std::string search_string, long start, long count, long* output){
+void DictionaryWorker::query_chunk(std::string source_file, std::string search_string, int start, int count, int* output){
 
     //open file 
     std::ifstream ifs( source_file );
@@ -394,12 +452,15 @@ void DictionaryWorker::query_chunk(std::string source_file, std::string search_s
     //seek to the character before our so we can see 
     ifs.seekg(start);
 
-    //start current ilne
-    long bytes_read = 0;
-    std::string key_string;
-    long matches = 0;
-    char token_buffer; 
+    //loop trackers
+    int bytes_read = 0;
+    int matches = 0;
+
+    //temp variables
     token_type token;
+    std::string key_string;
+
+
     while(bytes_read < count){
         //reset token
         token = 0;
@@ -455,12 +516,12 @@ std::stringstream DictionaryWorker::generate_hash_stream() {
 
 }
 
-long DictionaryWorker::process_hash_stream(std::ifstream& stream){
+int DictionaryWorker::process_hash_stream(std::ifstream& stream){
 
 
     std::string key_string;    
     char byte;
-    long byte_count = 0;
+    int byte_count = 0;
     while(stream.get(byte)){
         //increment the byte count
         byte_count++;

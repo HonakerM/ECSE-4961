@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 default:
 	mkdir -p files
-	g++ -std=c++11 -O3 *.cpp -o ./main.o  -pthread 
+	g++ -std=c++11 -msse -msse3 -O3 *.cpp -o ./main.o  -pthread 
 
 debug:
 	mkdir -p files
