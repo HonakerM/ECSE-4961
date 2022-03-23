@@ -140,8 +140,6 @@ The timing of the application was split into 4 categories with all timings in `m
 
 #### Encoding
 
- 
-```markdown
 | Thread Count | Initial Processing | Thread Startup Time | Processing Time | Writing Time |
 |--------------|--------------------|---------------------|-----------------|--------------|
 | 1            | 37                 | 3.6                 | 9490.6          | 65.4         |
@@ -160,7 +158,8 @@ The timing of the application was split into 4 categories with all timings in `m
 | 14           | 28.2               | 13.2                | 14510.6         | 55           |
 | 15           | 28.6               | 10.4                | 14823.6         | 59.8         |
 | 16           | 27.2               | 12.8                | 15138.4         | 56.4         |
-```
+
+
 ![results/encoding_timing_seq.png](results/encoding_timing_seq.png)
 
 
@@ -172,6 +171,7 @@ As the above image and table interestingly shows encoding initally gets much wor
 With the implmented encoding algorithm it is simple to calculate the encoded data size with the following equation `key*key_size + num_of_keys*4`. For the example data, which is 247 megabytes the resultant encoded data is only 96 megabytes! One way this encoding could produce better results is to create a variable length data alignment. Currently each token utilizes 4 bytes when all of the tokens could easily fit within 3 bytes which would reduce the size down by almost 23 megabytes! This variable length would need to be included inside the metadata and require rewriting the dataoutput which is outside of the scope of this project.  
 
 #### Decoding
+
 | Thread Count | Initial Processing | Thread Startup Time | Processing Time | Writing Time |
 |--------------|--------------------|---------------------|-----------------|--------------|
 | 1            | 76                 | 5.6                 | 5119.8          | 7            |
@@ -187,11 +187,13 @@ With the implmented encoding algorithm it is simple to calculate the encoded dat
 | 12           | 71.8               | 15.6                | 2580.4          | 8.4          |
 | 16           | 58.2               | 11.2                | 2692.2          | 7.6          |
 
+
 ![results/encoding_timing.png](results/decoding_timing.png)
 
 Unlink encoding decoding greatly benifits from parallelization with the processing timing seeing a 200% increase in performance. The peformance maxes out around 4 threads due to that being the limit of cores on the CPU.  One thing to note is that the example data I was using was not easily devided by all thread counts and thus it was skipped. This same issue also affects querying
 
 #### Querying
+
 | Thread Count | Initial Processing | Thread Startup Time | Processing Time | Writing Time |
 |--------------|--------------------|---------------------|-----------------|--------------|
 | 1            | 2.2                | 2.2                 | 4470.6          | 0            |
