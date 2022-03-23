@@ -95,9 +95,9 @@ key1
 key2
 key3
 ```
-After the metadata section there is a file delimiter `|||||||||||||||`to let the worker know when the data section is done. The data section is an ordered list of binary encoded tokens aligned at 4 bytes where each token is a number. For example the above coding would produce the following data section (represented in hex encoding):
+After the metadata section there is a file delimiter `|||||||||||||||`to let the worker know when the data section is done. The data section is an ordered list of binary encoded tokens aligned at 4 bytes where each token is a number. For example the above coding would produce the following data section (represented in hex):
 ```
-001002003
+000100020003
 ```
 
 
