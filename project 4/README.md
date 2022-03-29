@@ -95,9 +95,9 @@ key1
 key2
 key3
 ```
-After the metadata section there is a file delimiter `|||||||||||||||`to let the worker know when the data section is done. The data section is an ordered list of binary encoded tokens aligned at 4 bytes where each token is a number. For example the above coding would produce the following data section (represented in hex encoding):
+After the metadata section there is a file delimiter `|||||||||||||||`to let the worker know when the data section is done. The data section is an ordered list of binary encoded tokens aligned at 4 bytes where each token is a number. For example the above coding would produce the following data section (represented in hex):
 ```
-001002003
+000100020003
 ```
 
 
@@ -140,8 +140,6 @@ The timing of the application was split into 4 categories with all timings in `m
 
 #### Encoding
 
- 
-```markdown
 | Thread Count | Initial Processing | Thread Startup Time | Processing Time | Writing Time |
 |--------------|--------------------|---------------------|-----------------|--------------|
 | 1            | 37                 | 3.6                 | 9490.6          | 65.4         |
@@ -160,13 +158,20 @@ The timing of the application was split into 4 categories with all timings in `m
 | 14           | 28.2               | 13.2                | 14510.6         | 55           |
 | 15           | 28.6               | 10.4                | 14823.6         | 59.8         |
 | 16           | 27.2               | 12.8                | 15138.4         | 56.4         |
-```
-![results/encoding_timing.png](results/encoding_timing.png)
-As the above image and table interestingly shows encoding initally gets much worse (2 threads is almost double the time) and then it settles at around a 36% performance decrease. This is caused because each encoding thread is required to acquire a `mutex` lock when adding keys to the hash table which in turns causes a problem known as [busy waiting](https://en.wikipedia.org/wiki/Busy_waiting). This could possibly be fixed by utilizing atomic operations on a custom built hash table but that was outside the scope of this project.
 
-  
+
+![results/encoding_timing_seq.png](results/encoding_timing_seq.png)
+
+
+As the above image and table interestingly shows encoding initally gets much worse (2 threads is almost double the time) and then it settles at around a 36% performance decrease. This is caused because each encoding thread is required to acquire a `mutex` lock when adding keys to the hash table which in turns causes a problem known as [busy waiting](https://en.wikipedia.org/wiki/Busy_waiting). This could possibly be fixed by utilizing atomic operations on a custom built hash table but that was outside the scope of this project. The graph does not show a good representation of any of the other timings but they were largely inconsiquential. The inital processing and writing are constant as they're dependent on the data input size. As the table shows the thread startup time increases with thread count but it is marginal. 
+
+ 
+#### Encoding Size
+
+With the implmented encoding algorithm it is simple to calculate the encoded data size with the following equation `key*key_size + num_of_keys*4`. For the example data, which is 247 megabytes the resultant encoded data is only 96 megabytes! One way this encoding could produce better results is to create a variable length data alignment. Currently each token utilizes 4 bytes when all of the tokens could easily fit within 3 bytes which would reduce the size down by almost 23 megabytes! This variable length would need to be included inside the metadata and require rewriting the dataoutput which is outside of the scope of this project.  
 
 #### Decoding
+
 | Thread Count | Initial Processing | Thread Startup Time | Processing Time | Writing Time |
 |--------------|--------------------|---------------------|-----------------|--------------|
 | 1            | 76                 | 5.6                 | 5119.8          | 7            |
@@ -182,11 +187,13 @@ As the above image and table interestingly shows encoding initally gets much wor
 | 12           | 71.8               | 15.6                | 2580.4          | 8.4          |
 | 16           | 58.2               | 11.2                | 2692.2          | 7.6          |
 
-![results/encoding_timing.png](results/encoding_timing.png)
 
-Unlink encoding decoding greatly benifits from parallelization with the processing timing seeing a 200% increase in performance. The peformance maxes out around 4 threads due to that being the limit of cores on the CPU.  One thing to note is that the example data I was using was not easily devided and thus it was skipped. This same issue also affects querying
+![results/encoding_timing.png](results/decoding_timing.png)
+
+Unlink encoding decoding greatly benifits from parallelization with the processing timing seeing a 200% increase in performance. The peformance maxes out around 4 threads due to that being the limit of cores on the CPU.  One thing to note is that the example data I was using was not easily devided by all thread counts and thus it was skipped. This same issue also affects querying
 
 #### Querying
+
 | Thread Count | Initial Processing | Thread Startup Time | Processing Time | Writing Time |
 |--------------|--------------------|---------------------|-----------------|--------------|
 | 1            | 2.2                | 2.2                 | 4470.6          | 0            |
@@ -201,11 +208,12 @@ Unlink encoding decoding greatly benifits from parallelization with the processi
 | 12           | 14.8               | 14.8                | 2046            | 0            |
 | 16           | 17.4               | 17.4                | 1969.2          | 0            |
 
-![results/encoding_timing.png](results/encoding_timing.png)
+
+![results/encoding_timing.png](results/query_timing.png)
 
 Similarly to decoding querying also sees a noticable improvement with threading. One thing to note is that `O(num_of_keys)` performance can be achived by including the count in the meta data but I thought that removed the real life comparison of general data operations. 
 
 
 ## Conclusion
 
-Overall I believe that my dictionary encoder was a success. It performed reasonabily well on large data sets. I left some performance on the table utilizing built in c++ libraries but I believe the simplicity was worth the cost. I was not able to find a good place to implement simd instructions as the operations did not require any form of large scale reduction (where simd's benifits can be best observed). 
+Overall I believe that my dictionary encoder was a success. It performed reasonabily well on large data sets. I left some performance on the table utilizing built in c++ libraries but I believe the simplicity was worth the cost. I was also not able to find a good place to implement simd instructions as the operations did not require any form of large scale reduction (where simd's benifits can be best observed). 
