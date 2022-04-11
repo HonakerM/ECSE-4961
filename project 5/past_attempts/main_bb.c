@@ -1,8 +1,27 @@
 /*
-    This code is based off of the big brother file system from 
+  Big Brother File System
+  Copyright (C) 2012 Joseph J. Pfeiffer, Jr., Ph.D. <pfeiffer@cs.nmsu.edu>
+
+  This program can be distributed under the terms of the GNU GPLv3.
+  See the file COPYING.
+
+  This code is derived from function prototypes found /usr/include/fuse/fuse.h
+  Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
+  His code is licensed under the LGPLv2.
+  A copy of that code is included in the file fuse.h
+  
+  The point of this FUSE filesystem is to provide an introduction to
+  FUSE.  It was my first FUSE filesystem as I got to know the
+  software; hopefully, the comments in this code will help people who
+  follow later to get a gentler introduction.
+
+  This might be called a no-op filesystem:  it doesn't impose
+  filesystem semantics on top of any other existing structure.  It
+  simply reports the requests that come in, and passes them to an
+  underlying filesystem.  The information is saved in a logfile named
+  bbfs.log, in the directory from which you run bbfs.
 */
-#include "config.h"
-#include "params.h"
+#include "main_bb.h"
 
 #include <ctype.h>
 #include <dirent.h>
@@ -862,10 +881,10 @@ int main(int argc, char *argv[])
     // and refuse if it is.  The somewhat smaller hole of an ordinary
     // user doing it with the allow_other flag is still there because
     // I don't want to parse the options string.
-    /*if ((getuid() == 0) || (geteuid() == 0)) {
+    if ((getuid() == 0) || (geteuid() == 0)) {
     	fprintf(stderr, "Running BBFS as root opens unnacceptable security holes\n");
     	return 1;
-    }*/
+    }
 
     // See which version of fuse we're running
     fprintf(stderr, "Fuse library version %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
