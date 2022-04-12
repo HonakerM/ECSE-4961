@@ -42,7 +42,7 @@ typedef std::unordered_map<token_type, std::string> decode_table_type;
 // 8 for avx
 #define SIMD_BATCH_SIZE 4
 
-class    {
+class   DictionaryWorker {
 public:
     DictionaryWorker(int num_of_threads, bool report_timing);
     DictionaryWorker(const DictionaryWorker&);
