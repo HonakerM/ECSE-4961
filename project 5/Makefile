@@ -1,8 +1,8 @@
-default:
-	gcc -Wall main.c log.c `pkg-config fuse --cflags --libs` -o main.o -D_FILE_OFFSET_BITS=64
+default: build
+	
 
 build:
-	gcc -Wall main.c log.c `pkg-config fuse --cflags --libs` -o main.o -D_FILE_OFFSET_BITS=64
+	g++ -Wall main.cpp log.cpp `pkg-config fuse --cflags --libs` -o main.o -D_FILE_OFFSET_BITS=64
 
 mount:
 	mkdir -p mount_dir 
@@ -11,3 +11,6 @@ mount:
 
 unmount:
 	fusermount -u mount_dir
+
+test: unmount build mount
+	
