@@ -386,11 +386,11 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
 
     //std::string string_buffer = std::string(buf, size);
 
-    std::vector<std::string*> output_strings;
     std::string string_buffer = "";
     std::string* temp_buffer = new std::string();
     *temp_buffer = "";
-    int total_output_size=0;
+    int bytes_written=0;
+
     for(size_t i =0; i< size; i++) {
         // char
         char item = buf[i];
@@ -399,7 +399,7 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
 
         // ig ending then break
         if(item == ' ' || item == '\n'){
-            log_msg("Found a new line\n");
+            log_msg("Found a new line and the enc table has a size of %d and key %s\n", enc_table.size(), enc_table.begin()->first.c_str());
 
             /*
              if in encoding table then exchange
@@ -417,20 +417,18 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
             }
             */
            if(enc_table.find(*temp_buffer) != enc_table.end()){
-                //*temp_buffer = std::string(enc_table[*temp_buffer]);
-                temp_buffer->push_back(item);
-                output_strings.push_back(temp_buffer);
-            } else {
-                log_msg("temp buffer %s\n", temp_buffer);
-
-                *temp_buffer += item;
-                output_strings.push_back(temp_buffer);
+               log_msg("Found enc match with temp_buffer %s\n", temp_buffer->c_str());
+                *temp_buffer = std::to_string(enc_table[*temp_buffer]);
             }
+            *temp_buffer += item;
 
-            total_output_size += output_strings.back()->size();
+            log_msg("Writing %s to file\n", temp_buffer->c_str());
+
+            bytes_written += log_syscall("pwrite", pwrite(fi->fh, temp_buffer->c_str(), temp_buffer->size(), offset+bytes_written), 0);
+
+
 
             //reset temp buffer             
-            temp_buffer = new std::string();
             *temp_buffer = "";
         } else {
 
@@ -441,6 +439,22 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
 
     }
 
+    if(enc_table.find(*temp_buffer) != enc_table.end()){
+        log_msg("Found enc match with temp_buffer %s\n", temp_buffer->c_str());
+        *temp_buffer = std::to_string(enc_table[*temp_buffer]);
+    }
+    log_msg("Writing %s to file\n", temp_buffer->c_str());
+
+    bytes_written += log_syscall("pwrite", pwrite(fi->fh, temp_buffer->c_str(), temp_buffer->size(), offset+bytes_written), 0);
+
+
+    log_msg("Actual size: %d expected size: %d\n", size, bytes_written);
+
+    delete temp_buffer;
+
+    return bytes_written;
+
+    /*
     //catch if in encoding table not ending
     if(*temp_buffer == "abc"){
         *temp_buffer = "bcd";
@@ -468,8 +482,9 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
     //    bytes_written = log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
     //}
     log_msg("Actual size: %d expected size: %d bytes actually written: %d\n", size, total_output_size, bytes_written);
-
     return bytes_written;
+        */
+
 }
 
 /** Get file system statistics

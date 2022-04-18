@@ -23,6 +23,7 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <iostream>
 #include <sys/types.h>
 #include <fstream>
 

@@ -7,6 +7,7 @@ build:
 mount:
 	mkdir -p mount_dir 
 	mkdir -p src_dir
+	rm bbfs.log
 	./main.o src_dir mount_dir ./enc_table.txt
 
 unmount:

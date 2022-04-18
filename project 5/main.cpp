@@ -20,11 +20,15 @@ void read_enc_table(std::string filename) {
     std::ifstream enc_file(filename);
 
     std::string line;
-    value_type line_count = 0;
+    value_type line_count = 1;
     while (std::getline(enc_file, line)) {
+        std::cout<<line<<":"<<line.size()<<std::endl;
         enc_table.insert(std::make_pair(line, line_count));
         dec_table.insert(std::make_pair(line_count, line));
+        line_count++;
     }
+    //enc_table.insert(std::make_pair("abc", 2));
+
 }
 
 
