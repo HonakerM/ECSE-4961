@@ -344,7 +344,7 @@ int bb_open(const char *path, struct fuse_file_info *fi)
 // returned by read.
 int bb_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    //int retstat = 0;
     
     log_msg("\nbb_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
@@ -375,7 +375,7 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
 	     struct fuse_file_info *fi)
 {
 
-    int retstat = 0;
+    //int retstat = 0;
     
     log_msg("bb_write buffer %s : %d\n", buf, size);
     log_msg("\nbb_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
@@ -391,7 +391,7 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
     std::string* temp_buffer = new std::string();
     *temp_buffer = "";
     int total_output_size=0;
-    for(int i =0; i< size; i++) {
+    for(size_t i =0; i< size; i++) {
         // char
         char item = buf[i];
 
@@ -454,7 +454,7 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
 
 
     int bytes_written=0;
-    for(auto i=0; i<output_strings.size(); i++){
+    for(std::size_t i=0; i<output_strings.size(); i++){
         //log_msg("Offset of writings %d\n", current_offset);
 
         bytes_written += log_syscall("pwrite", pwrite(fi->fh, (char*)output_strings[i]->c_str(), output_strings[i]->size(), offset+bytes_written), 0);

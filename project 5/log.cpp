@@ -52,7 +52,7 @@ void log_msg(const char *format, ...)
 }
 
 // Report errors to logfile and give -errno to caller
-int log_error(char *func)
+int log_error(const char *func)
 {
     int ret = -errno;
     
@@ -184,7 +184,7 @@ void log_fi (struct fuse_file_info *fi)
 	log_struct(fi, lock_owner, 0x%016llx, );
 }
 
-void log_retstat(char *func, int retstat)
+void log_retstat(const char *func, int retstat)
 {
     int errsave = errno;
     log_msg("    %s returned %d\n", func, retstat);
@@ -193,7 +193,7 @@ void log_retstat(char *func, int retstat)
       
 // make a system call, checking (and reporting) return status and
 // possibly logging error
-int log_syscall(char *func, int retstat, int min_ret)
+int log_syscall(const char *func, int retstat, int min_ret)
 {
     log_retstat(func, retstat);
 

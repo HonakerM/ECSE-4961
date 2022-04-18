@@ -9,7 +9,6 @@
 /*
   General Fiel System Declerations
 */
-static void bb_fullpath(char fpath[PATH_MAX], const char *path);
 int bb_getattr(const char *path, struct stat *statbuf);
 int bb_readlink(const char *path, char *link, size_t size);
 int bb_mknod(const char *path, mode_t mode, dev_t dev);
