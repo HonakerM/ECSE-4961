@@ -1,27 +1,53 @@
 /*
     This code is based off of the big brother file system from 
 */
-#include "config.h"
-#include "params.h"
+#include "fs.h"
 
-#include <ctype.h>
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <fuse.h>
-#include <libgen.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
 
+
+struct fuse_operations bb_oper = {
+  .getattr = bb_getattr,
+  .readlink = bb_readlink,
+  // no .getdir -- that's deprecated
+  .getdir = NULL,
+  .mknod = bb_mknod,
+  .mkdir = bb_mkdir,
+  .unlink = bb_unlink,
+  .rmdir = bb_rmdir,
+  .symlink = bb_symlink,
+  .rename = bb_rename,
+  .link = bb_link,
+  .chmod = bb_chmod,
+  .chown = bb_chown,
+  .truncate = bb_truncate,
+  .utime = bb_utime,
+  .open = bb_open,
+  .read = bb_read,
+  .write = bb_write,
+  /** Just a placeholder, don't set */ // huh???
+  .statfs = bb_statfs,
+  .flush = bb_flush,
+  .release = bb_release,
+  .fsync = bb_fsync,
+  
 #ifdef HAVE_SYS_XATTR_H
-#include <sys/xattr.h>
+  .setxattr = bb_setxattr,
+  .getxattr = bb_getxattr,
+  .listxattr = bb_listxattr,
+  .removexattr = bb_removexattr,
 #endif
+  
+  .opendir = bb_opendir,
+  .readdir = bb_readdir,
+  .releasedir = bb_releasedir,
+  .fsyncdir = bb_fsyncdir,
+  .init = bb_init,
+  .destroy = bb_destroy,
+  .access = bb_access,
+  .ftruncate = bb_ftruncate,
+  .fgetattr = bb_fgetattr
+};
 
-#include "log.h"
 
 //  All the paths I see are relative to the root of the mounted
 //  filesystem.  In order to get to the underlying filesystem, I need to
@@ -275,8 +301,8 @@ int bb_open(const char *path, struct fuse_file_info *fi)
     int fd;
     char fpath[PATH_MAX];
     
-    log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n",
-	    path, fi);
+    log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n", path, fi);
+
     bb_fullpath(fpath, path);
     
     // if the open call succeeds, my retstat is the file descriptor,
@@ -290,6 +316,13 @@ int bb_open(const char *path, struct fuse_file_info *fi)
 
     log_fi(fi);
     
+    log_msg("Resetting offset to 0\n");
+    //fi->offset = 0;
+
+
+    struct bb_state* state = (struct bb_state*)fuse_get_context()->private_data;
+    state->offset = 0;
+
     return retstat;
 }
 
@@ -318,7 +351,14 @@ int bb_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_
     // no need to get fpath on this one, since I work from fi->fh not the path
     log_fi(fi);
 
-    return log_syscall("pread", pread(fi->fh, buf, size, offset), 0);
+    struct bb_state* state = (struct bb_state*)fuse_get_context()->private_data;
+    if(offset != state->offset){
+        log_msg("Read FAILED! Offset request is %d but actual offset is %d\n", offset,state->offset);
+        return -1;
+    }
+    state->offset += log_syscall("pread", pread(fi->fh, buf, size, offset), 0);
+
+    return state->offset;
 }
 
 /** Write data to an open file
@@ -334,15 +374,102 @@ int bb_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_
 int bb_write(const char *path, const char *buf, size_t size, off_t offset,
 	     struct fuse_file_info *fi)
 {
+
     int retstat = 0;
     
+    log_msg("bb_write buffer %s : %d\n", buf, size);
     log_msg("\nbb_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi
 	    );
     // no need to get fpath on this one, since I work from fi->fh not the path
     log_fi(fi);
 
-    return log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
+    //std::string string_buffer = std::string(buf, size);
+
+    std::vector<std::string*> output_strings;
+    std::string string_buffer = "";
+    std::string* temp_buffer = new std::string();
+    *temp_buffer = "";
+    int total_output_size=0;
+    for(int i =0; i< size; i++) {
+        // char
+        char item = buf[i];
+
+        log_msg("temp buffer %s : %d\n", temp_buffer->c_str(), temp_buffer->size());
+
+        // ig ending then break
+        if(item == ' ' || item == '\n'){
+            log_msg("Found a new line\n");
+
+            /*
+             if in encoding table then exchange
+            */
+           /*
+            if(*temp_buffer == "abc"){
+                *temp_buffer = "bd";
+                temp_buffer->push_back(item);
+                output_strings.push_back(temp_buffer);
+            } else {
+                log_msg("temp buffer %s\n", temp_buffer);
+
+                *temp_buffer += item;
+                output_strings.push_back(temp_buffer);
+            }
+            */
+           if(enc_table.find(*temp_buffer) != enc_table.end()){
+                //*temp_buffer = std::string(enc_table[*temp_buffer]);
+                temp_buffer->push_back(item);
+                output_strings.push_back(temp_buffer);
+            } else {
+                log_msg("temp buffer %s\n", temp_buffer);
+
+                *temp_buffer += item;
+                output_strings.push_back(temp_buffer);
+            }
+
+            total_output_size += output_strings.back()->size();
+
+            //reset temp buffer             
+            temp_buffer = new std::string();
+            *temp_buffer = "";
+        } else {
+
+            //update temp buffer if not ending
+            *temp_buffer += item;
+        }
+
+
+    }
+
+    //catch if in encoding table not ending
+    if(*temp_buffer == "abc"){
+        *temp_buffer = "bcd";
+        output_strings.push_back(temp_buffer);
+    } else {
+        output_strings.push_back(temp_buffer);
+    }
+    total_output_size += output_strings.back()->size();
+
+    //log_msg("Number of writers %d\n", output_strings.size());
+
+
+    int bytes_written=0;
+    for(auto i=0; i<output_strings.size(); i++){
+        //log_msg("Offset of writings %d\n", current_offset);
+
+        bytes_written += log_syscall("pwrite", pwrite(fi->fh, (char*)output_strings[i]->c_str(), output_strings[i]->size(), offset+bytes_written), 0);
+
+        delete output_strings[i];
+    }
+    log_msg("offset %d current_offset %d\n",offset, bytes_written);
+
+    //if(buf == "abc"){
+    //} else {
+    //    bytes_written = log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
+    //}
+    log_msg("Actual size: %d expected size: %d bytes actually written: %d\n", size, total_output_size, bytes_written);
+
+    return bytes_written;
 }
 
 /** Get file system statistics
@@ -429,7 +556,7 @@ int bb_release(const char *path, struct fuse_file_info *fi)
 
 /** Synchronize file contents
  *
- * If the datasync parameter is non-zero, then only the user data
+ * If the datasync parfameter is non-zero, then only the user data
  * should be flushed, not the meta data.
  *
  * Changed in version 2.2
@@ -799,104 +926,4 @@ int bb_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info *f
     return retstat;
 }
 
-struct fuse_operations bb_oper = {
-  .getattr = bb_getattr,
-  .readlink = bb_readlink,
-  // no .getdir -- that's deprecated
-  .getdir = NULL,
-  .mknod = bb_mknod,
-  .mkdir = bb_mkdir,
-  .unlink = bb_unlink,
-  .rmdir = bb_rmdir,
-  .symlink = bb_symlink,
-  .rename = bb_rename,
-  .link = bb_link,
-  .chmod = bb_chmod,
-  .chown = bb_chown,
-  .truncate = bb_truncate,
-  .utime = bb_utime,
-  .open = bb_open,
-  .read = bb_read,
-  .write = bb_write,
-  /** Just a placeholder, don't set */ // huh???
-  .statfs = bb_statfs,
-  .flush = bb_flush,
-  .release = bb_release,
-  .fsync = bb_fsync,
-  
-#ifdef HAVE_SYS_XATTR_H
-  .setxattr = bb_setxattr,
-  .getxattr = bb_getxattr,
-  .listxattr = bb_listxattr,
-  .removexattr = bb_removexattr,
-#endif
-  
-  .opendir = bb_opendir,
-  .readdir = bb_readdir,
-  .releasedir = bb_releasedir,
-  .fsyncdir = bb_fsyncdir,
-  .init = bb_init,
-  .destroy = bb_destroy,
-  .access = bb_access,
-  .ftruncate = bb_ftruncate,
-  .fgetattr = bb_fgetattr
-};
 
-void bb_usage()
-{
-    fprintf(stderr, "usage:  bbfs [FUSE and mount options] rootDir mountPoint\n");
-    abort();
-}
-
-int main(int argc, char *argv[])
-{
-    int fuse_stat;
-    struct bb_state *bb_data;
-
-    // bbfs doesn't do any access checking on its own (the comment
-    // blocks in fuse.h mention some of the functions that need
-    // accesses checked -- but note there are other functions, like
-    // chown(), that also need checking!).  Since running bbfs as root
-    // will therefore open Metrodome-sized holes in the system
-    // security, we'll check if root is trying to mount the filesystem
-    // and refuse if it is.  The somewhat smaller hole of an ordinary
-    // user doing it with the allow_other flag is still there because
-    // I don't want to parse the options string.
-    /*if ((getuid() == 0) || (geteuid() == 0)) {
-    	fprintf(stderr, "Running BBFS as root opens unnacceptable security holes\n");
-    	return 1;
-    }*/
-
-    // See which version of fuse we're running
-    fprintf(stderr, "Fuse library version %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
-    
-    // Perform some sanity checking on the command line:  make sure
-    // there are enough arguments, and that neither of the last two
-    // start with a hyphen (this will break if you actually have a
-    // rootpoint or mountpoint whose name starts with a hyphen, but so
-    // will a zillion other programs)
-    if ((argc < 3) || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-'))
-	bb_usage();
-
-    bb_data = malloc(sizeof(struct bb_state));
-    if (bb_data == NULL) {
-	perror("main calloc");
-	abort();
-    }
-
-    // Pull the rootdir out of the argument list and save it in my
-    // internal data
-    bb_data->rootdir = realpath(argv[argc-2], NULL);
-    argv[argc-2] = argv[argc-1];
-    argv[argc-1] = NULL;
-    argc--;
-    
-    bb_data->logfile = log_open();
-    
-    // turn over control to fuse
-    fprintf(stderr, "about to call fuse_main\n");
-    fuse_stat = fuse_main(argc, argv, &bb_oper, bb_data);
-    fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
-    
-    return fuse_stat;
-}

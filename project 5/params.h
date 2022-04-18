@@ -26,6 +26,8 @@
 struct bb_state {
     FILE *logfile;
     char *rootdir;
+
+    unsigned int offset;
 };
 #define BB_DATA ((struct bb_state *) fuse_get_context()->private_data)
 
