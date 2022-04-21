@@ -1,11 +1,10 @@
 
 #include "main.h"
-
+#include "fs_context.h"
 extern struct fuse_operations bb_oper;
 
 
-std::unordered_map<key_type, value_type> enc_table;
-std::unordered_map<value_type, key_type> dec_table;
+
 
 
 void bb_usage()
@@ -16,15 +15,15 @@ void bb_usage()
 
 
 
-void read_enc_table(std::string filename) {
+void read_enc_table(std::string filename, std::unordered_map<FUSE_ENCODING_KEY_TYPE, FUSE_ENCODING_VALUE_TYPE>* enc_table,std::unordered_map<FUSE_ENCODING_VALUE_TYPE, FUSE_ENCODING_KEY_TYPE>* dec_table) {
     std::ifstream enc_file(filename);
 
     std::string line;
-    value_type line_count = 1;
+    FUSE_ENCODING_VALUE_TYPE line_count = 1;
     while (std::getline(enc_file, line)) {
         std::cout<<line<<":"<<line.size()<<std::endl;
-        enc_table.insert(std::make_pair(line, line_count));
-        dec_table.insert(std::make_pair(line_count, line));
+        enc_table->insert(std::make_pair(line, line_count));
+        dec_table->insert(std::make_pair(line_count, line));
         line_count++;
     }
     //enc_table.insert(std::make_pair("abc", 2));
@@ -36,7 +35,7 @@ void read_enc_table(std::string filename) {
 int main(int argc, char *argv[])
 {
     int fuse_stat;
-    struct bb_state *bb_data;
+    FsContext *bb_data;
 
     // bbfs doesn't do any access checking on its own (the comment
     // blocks in fuse.h mention some of the functions that need
@@ -63,7 +62,7 @@ int main(int argc, char *argv[])
     if ((argc < 4) || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-'))
 	bb_usage();
 
-    bb_data = (bb_state*)malloc(sizeof(struct bb_state));
+    bb_data = new FsContext();
     if (bb_data == NULL) {
 	perror("main calloc");
 	abort();
@@ -72,7 +71,7 @@ int main(int argc, char *argv[])
     // Pull the rootdir out of the argument list and save it in my
     // internal data
     //bb_data->rootdir = realpath(argv[argc-2], NULL);
-    read_enc_table(argv[argc-1]);
+    read_enc_table(argv[argc-1],bb_data->enc_table,bb_data->dec_table);
     argv[argc-1] = NULL;
     argc--;
 

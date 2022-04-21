@@ -4,6 +4,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+
+
 #include "config.h"
 #include "params.h"
 
@@ -26,20 +28,16 @@
 #include <iostream>
 #include <sys/types.h>
 #include <fstream>
+#include <utility>
 
 #ifdef HAVE_SYS_XATTR_H
 #include <sys/xattr.h>
 #endif
 
+#include "fs_context.h"
+
 #include "log.h"
 #include "fs.h"
-
-/* encoding table types */
-typedef int value_type;
-typedef std::string key_type;
-
-extern std::unordered_map<key_type, value_type> enc_table;
-extern std::unordered_map<value_type, key_type> dec_table;
 
 
 #endif

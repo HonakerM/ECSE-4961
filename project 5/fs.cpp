@@ -2,7 +2,7 @@
     This code is based off of the big brother file system from 
 */
 #include "fs.h"
-
+#include "encoding.h"
 
 
 struct fuse_operations bb_oper = {
@@ -311,17 +311,20 @@ int bb_open(const char *path, struct fuse_file_info *fi)
     fd = log_syscall("open", open(fpath, fi->flags), 0);
     if (fd < 0)
 	retstat = log_error("open");
-	
+
+    
     fi->fh = fd;
 
     log_fi(fi);
     
-    log_msg("Resetting offset to 0\n");
+    log_msg("Adding offset %d to file handle %d\n", 0, fd);
+    //calcualte to find the actual new offset and not just 0
+    BB_DATA->offset_table->insert(std::make_pair(fd, std::make_pair(0,0)));
     //fi->offset = 0;
 
 
-    struct bb_state* state = (struct bb_state*)fuse_get_context()->private_data;
-    state->offset = 0;
+    //struct bb_state* state = (struct bb_state*)fuse_get_context()->private_data;
+    //state->offset = 0;
 
     return retstat;
 }
@@ -351,14 +354,27 @@ int bb_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_
     // no need to get fpath on this one, since I work from fi->fh not the path
     log_fi(fi);
 
-    struct bb_state* state = (struct bb_state*)fuse_get_context()->private_data;
-    if(offset != state->offset){
-        log_msg("Read FAILED! Offset request is %d but actual offset is %d\n", offset,state->offset);
+    FsContext* state = BB_DATA;
+
+    // require all reads be sequential (this way decoding is accurate)
+    // this is a bad solution but it helps show a proof of concept
+    off_t offset_table_offset = state->offset_table->at(fi->fh).second;
+    if(offset != offset_table_offset){
+        log_msg("Read FAILED! Fh is %d Offset request is %d but actual offset is %d\n",fi->fh, offset,offset_table_offset);
         return -1;
     }
-    state->offset += log_syscall("pread", pread(fi->fh, buf, size, offset), 0);
 
-    return state->offset;
+    /*
+    * Decode the buffer data
+    */
+    offset += log_syscall("pread", pread(fi->fh, buf, size, offset), 0);
+    offset_table_offset = offset;
+
+    //update the offset table    
+    state->offset_table->at(fi->fh) = std::make_pair(offset, offset_table_offset);
+
+    //return the offset they expected
+    return offset;
 }
 
 /** Write data to an open file
@@ -390,43 +406,30 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
     std::string* temp_buffer = new std::string();
     *temp_buffer = "";
     int bytes_written=0;
+    std::unordered_map<FUSE_ENCODING_KEY_TYPE, FUSE_ENCODING_VALUE_TYPE> enc_table = *BB_DATA->enc_table;
 
     for(size_t i =0; i< size; i++) {
         // char
         char item = buf[i];
-
-        log_msg("temp buffer %s : %d\n", temp_buffer->c_str(), temp_buffer->size());
+        //log_msg("temp buffer %s : %d\n", temp_buffer->c_str(), temp_buffer->size());
 
         // ig ending then break
         if(item == ' ' || item == '\n'){
-            log_msg("Found a new line and the enc table has a size of %d and key %s\n", enc_table.size(), enc_table.begin()->first.c_str());
+            //log_msg("Found a new line and the enc table has a size of %d and key %s\n", enc_table.size(), enc_table.begin()->first.c_str());
 
             /*
              if in encoding table then exchange
             */
-           /*
-            if(*temp_buffer == "abc"){
-                *temp_buffer = "bd";
-                temp_buffer->push_back(item);
-                output_strings.push_back(temp_buffer);
-            } else {
-                log_msg("temp buffer %s\n", temp_buffer);
-
-                *temp_buffer += item;
-                output_strings.push_back(temp_buffer);
-            }
-            */
-           if(enc_table.find(*temp_buffer) != enc_table.end()){
-               log_msg("Found enc match with temp_buffer %s\n", temp_buffer->c_str());
+           
+           /*if(enc_table.find(*temp_buffer) != enc_table.end()){
+               //log_msg("Found enc match with temp_buffer %s\n", temp_buffer->c_str());
                 *temp_buffer = std::to_string(enc_table[*temp_buffer]);
-            }
-            *temp_buffer += item;
-
+            }*/
+            //encode chunk
+            std::vector<char> encoded_chunk = encode_chunck(&enc_table,*temp_buffer, item);
             log_msg("Writing %s to file\n", temp_buffer->c_str());
 
-            bytes_written += log_syscall("pwrite", pwrite(fi->fh, temp_buffer->c_str(), temp_buffer->size(), offset+bytes_written), 0);
-
-
+            bytes_written += log_syscall("pwrite", pwrite(fi->fh, &encoded_chunk[0], encoded_chunk.size(), offset+bytes_written), 0);
 
             //reset temp buffer             
             *temp_buffer = "";
@@ -435,56 +438,20 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
             //update temp buffer if not ending
             *temp_buffer += item;
         }
-
-
     }
 
     if(enc_table.find(*temp_buffer) != enc_table.end()){
-        log_msg("Found enc match with temp_buffer %s\n", temp_buffer->c_str());
+        //log_msg("Found enc match with temp_buffer %s\n", temp_buffer->c_str());
         *temp_buffer = std::to_string(enc_table[*temp_buffer]);
     }
-    log_msg("Writing %s to file\n", temp_buffer->c_str());
+    //log_msg("Writing %s to file\n", temp_buffer->c_str());
 
     bytes_written += log_syscall("pwrite", pwrite(fi->fh, temp_buffer->c_str(), temp_buffer->size(), offset+bytes_written), 0);
 
-
-    log_msg("Actual size: %d expected size: %d\n", size, bytes_written);
-
+    //log_msg("Actual size: %d expected size: %d\n", size, bytes_written);
     delete temp_buffer;
 
-    return bytes_written;
-
-    /*
-    //catch if in encoding table not ending
-    if(*temp_buffer == "abc"){
-        *temp_buffer = "bcd";
-        output_strings.push_back(temp_buffer);
-    } else {
-        output_strings.push_back(temp_buffer);
-    }
-    total_output_size += output_strings.back()->size();
-
-    //log_msg("Number of writers %d\n", output_strings.size());
-
-
-    int bytes_written=0;
-    for(std::size_t i=0; i<output_strings.size(); i++){
-        //log_msg("Offset of writings %d\n", current_offset);
-
-        bytes_written += log_syscall("pwrite", pwrite(fi->fh, (char*)output_strings[i]->c_str(), output_strings[i]->size(), offset+bytes_written), 0);
-
-        delete output_strings[i];
-    }
-    log_msg("offset %d current_offset %d\n",offset, bytes_written);
-
-    //if(buf == "abc"){
-    //} else {
-    //    bytes_written = log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
-    //}
-    log_msg("Actual size: %d expected size: %d bytes actually written: %d\n", size, total_output_size, bytes_written);
-    return bytes_written;
-        */
-
+    return size;
 }
 
 /** Get file system statistics
@@ -563,6 +530,8 @@ int bb_release(const char *path, struct fuse_file_info *fi)
     log_msg("\nbb_release(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
     log_fi(fi);
+
+    BB_DATA->offset_table->erase(fi->fh);
 
     // We need to close the file.  Had we allocated any resources
     // (buffers etc) we'd need to free them here as well.

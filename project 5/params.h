@@ -29,6 +29,6 @@ struct bb_state {
 
     unsigned int offset;
 };
-#define BB_DATA ((struct bb_state *) fuse_get_context()->private_data)
+//#define BB_DATA ((struct bb_state *) fuse_get_context()->private_data)
 
 #endif
