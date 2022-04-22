@@ -85,7 +85,10 @@ int bb_getattr(const char *path, struct stat *statbuf)
     bb_fullpath(fpath, path);
 
     retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
-    
+
+    int actual_size = decoded_size(BB_DATA->dec_table, fpath);
+    statbuf->st_size = actual_size;
+
     log_stat(statbuf);
     
     return retstat;
@@ -358,23 +361,90 @@ int bb_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_
 
     // require all reads be sequential (this way decoding is accurate)
     // this is a bad solution but it helps show a proof of concept
-    off_t offset_table_offset = state->offset_table->at(fi->fh).second;
-    if(offset != offset_table_offset){
-        log_msg("Read FAILED! Fh is %d Offset request is %d but actual offset is %d\n",fi->fh, offset,offset_table_offset);
+    off_t expected_table_offset = state->offset_table->at(fi->fh).second;
+    if(offset != expected_table_offset){
+        log_msg("Read FAILED! Fh is %d Offset request is %d but actual offset is %d\n",fi->fh, offset,expected_table_offset);
         return -1;
     }
 
     /*
     * Decode the buffer data
     */
-    offset += log_syscall("pread", pread(fi->fh, buf, size, offset), 0);
-    offset_table_offset = offset;
+    
+    //read in inital chunk of data
+    char* temp_buffer = (char*)malloc(CHUNK_SIZE+1);
+    int actual_offset = state->offset_table->at(fi->fh).first;
+    int decoded_bytes = 0;
+    std::string temp_string;
+    bool eof_eob_break = false;
+    //inital read
+
+    while(decoded_bytes<size && !eof_eob_break){
+        int bytes_read = log_syscall("pread", pread(fi->fh, temp_buffer,CHUNK_SIZE, actual_offset), 0);
+        if(bytes_read<=0){
+            //hit eof
+            log_msg("\nHit end of file\n");
+            eof_eob_break = true;
+            break;
+        }
+        log_msg("\nWe just read %d bytes into temp_buffer at offset %d\n",bytes_read, actual_offset);
+        actual_offset += bytes_read;
+
+        //add data to previously left string
+         log_msg("\nTemp String:");
+        for(int i=0;i<bytes_read;i++){
+            log_msg("%02x|", temp_buffer[i]);
+
+            temp_string += temp_buffer[i];
+        }
+        log_msg(" Total szize is %d\n", temp_string.size());
+        //decode the data
+
+        //int bytes = decode_chunk(&state->dec_table,std::string(temp_buffer))
+        std::vector<std::pair<std::string, char>> returned_data = decode_chunk(state->dec_table,temp_string);
+
+        log_msg("\nReturned %d number of keys with %d left over\n",returned_data.size(), temp_string.size());
+
+
+        for(auto i=0;i<returned_data.size();i++){
+            auto pair = returned_data[i];
+            std::string data = pair.first;
+            char delim = pair.second;
+            log_msg("\nWriting %s to buffer\n", data.c_str());
+            for(auto j=0;j<data.size();j++){
+                if(decoded_bytes>=size){
+                    eof_eob_break = true;
+                    break;
+                }
+                buf[decoded_bytes] = data[j];
+                decoded_bytes++;
+            }
+            
+            //if broken out of last loop then continue to break
+            if(eof_eob_break){
+                break;
+            }
+
+            if(delim != '-'){
+                buf[decoded_bytes] = delim;
+                decoded_bytes++;
+            } else {
+                eof_eob_break = true;
+                break;
+            }
+        }
+
+        log_msg("Number of decoded bytes %d and size %d with %d eof\n",decoded_bytes,size, eof_eob_break);
+    }   
+
+    int os_reported_offset = offset + decoded_bytes;
 
     //update the offset table    
-    state->offset_table->at(fi->fh) = std::make_pair(offset, offset_table_offset);
+    state->offset_table->at(fi->fh) = std::make_pair(actual_offset, os_reported_offset);
 
+    log_msg("Returning a number of %d bytes\n", decoded_bytes);
     //return the offset they expected
-    return offset;
+    return os_reported_offset;
 }
 
 /** Write data to an open file
@@ -407,6 +477,8 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
     *temp_buffer = "";
     int bytes_written=0;
     std::unordered_map<FUSE_ENCODING_KEY_TYPE, FUSE_ENCODING_VALUE_TYPE> enc_table = *BB_DATA->enc_table;
+    std::vector<char> encoded_chunk;
+    int bytes_left = 0;
 
     for(size_t i =0; i< size; i++) {
         // char
@@ -426,29 +498,30 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
                 *temp_buffer = std::to_string(enc_table[*temp_buffer]);
             }*/
             //encode chunk
-            std::vector<char> encoded_chunk = encode_chunck(&enc_table,*temp_buffer, item);
+            encoded_chunk = encode_chunck(&enc_table,*temp_buffer, item);
             log_msg("Writing %s to file\n", temp_buffer->c_str());
 
             bytes_written += log_syscall("pwrite", pwrite(fi->fh, &encoded_chunk[0], encoded_chunk.size(), offset+bytes_written), 0);
 
-            //reset temp buffer             
+            //reset temp buffer
+            bytes_left = 0;
+            encoded_chunk.clear();             
             *temp_buffer = "";
         } else {
-
+            bytes_left++;
             //update temp buffer if not ending
             *temp_buffer += item;
         }
     }
+    if(bytes_left!=0){
+        encoded_chunk.clear();  
+        encoded_chunk = encode_chunck(&enc_table,*temp_buffer, '-');
 
-    if(enc_table.find(*temp_buffer) != enc_table.end()){
-        //log_msg("Found enc match with temp_buffer %s\n", temp_buffer->c_str());
-        *temp_buffer = std::to_string(enc_table[*temp_buffer]);
+        //log_msg("Writing %s to file\n", temp_buffer->c_str());
+        bytes_written += log_syscall("pwrite", pwrite(fi->fh, &encoded_chunk[0], encoded_chunk.size(), offset+bytes_written), 0);
     }
-    //log_msg("Writing %s to file\n", temp_buffer->c_str());
 
-    bytes_written += log_syscall("pwrite", pwrite(fi->fh, temp_buffer->c_str(), temp_buffer->size(), offset+bytes_written), 0);
-
-    //log_msg("Actual size: %d expected size: %d\n", size, bytes_written);
+    log_msg("Actual size: %d expected size: %d\n", bytes_written, size);
     delete temp_buffer;
 
     return size;

@@ -22,7 +22,7 @@ public:
     FILE *logfile;
     char *rootdir;
 
-    //file descriptor + <true offset, last offset>
+    //file descriptor + <true offset, last reported offset>
     std::unordered_map<int, offset_pair>* offset_table;
 
     std::unordered_map<FUSE_ENCODING_KEY_TYPE, FUSE_ENCODING_VALUE_TYPE>* enc_table;

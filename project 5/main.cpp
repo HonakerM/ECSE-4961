@@ -19,7 +19,7 @@ void read_enc_table(std::string filename, std::unordered_map<FUSE_ENCODING_KEY_T
     std::ifstream enc_file(filename);
 
     std::string line;
-    FUSE_ENCODING_VALUE_TYPE line_count = 1;
+    FUSE_ENCODING_VALUE_TYPE line_count = 0;
     while (std::getline(enc_file, line)) {
         std::cout<<line<<":"<<line.size()<<std::endl;
         enc_table->insert(std::make_pair(line, line_count));
