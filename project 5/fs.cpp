@@ -403,7 +403,7 @@ int bb_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_
         //int bytes = decode_chunk(&state->dec_table,std::string(temp_buffer))
         std::vector<std::pair<std::string, char>> returned_data = decode_chunk(state->dec_table,temp_string);
 
-        log_msg("\nReturned %d number of keys with %d left over\n",returned_data.size(), temp_string.size());
+        //log_msg("\nReturned %d number of keys with %d left over\n",returned_data.size(), temp_string.size());
 
 
         for(auto i=0;i<returned_data.size();i++){
@@ -499,7 +499,7 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
             }*/
             //encode chunk
             encoded_chunk = encode_chunck(&enc_table,*temp_buffer, item);
-            log_msg("Writing %s to file\n", temp_buffer->c_str());
+            log_msg("Writing vector of size %d file\n",encoded_chunk.size());
 
             bytes_written += log_syscall("pwrite", pwrite(fi->fh, &encoded_chunk[0], encoded_chunk.size(), offset+bytes_written), 0);
 

@@ -6,22 +6,22 @@
 
 static inline void set_delim(short& bytes, char delim) {
     if(delim == ' '){
-        bytes &= 0x3F;
+        bytes &= 0x3FFF;
     } else if(delim == '\n'){
-        bytes &= 0x3F;
-        bytes |= 0x40;
+        bytes &= 0x3FFF;
+        bytes |= 0x4000;
     } else if (delim == '-'){
-        bytes &= 0x3F;
-        bytes |= 0x80;
+        bytes &= 0x3FFF;
+        bytes |= 0x8000;
     }
 }
 
 static inline char get_delim(short& bytes) {
-    if((bytes & 0xC0) == 0x00){
+    if((bytes & 0xC000) == 0x0000){
         return ' '; 
-    } else if((bytes & 0xC0) == 0x40){
+    } else if((bytes & 0xC000) == 0x4000){
         return '\n';
-    } else if ((bytes & 0xC0) == 0x80){
+    } else if ((bytes & 0xC000) == 0x8000){
         return '-';
     }
     return '\0';
@@ -58,7 +58,7 @@ std::vector<std::pair<std::string, char>> decode_chunk(std::unordered_map<FUSE_E
     }
 
     std::vector<std::pair<std::string, char>> output_data;
-    while(!input_data.empty()){
+    while(input_data.size()>1){
         //get the meta data
         short meta_data = (((short)input_data[0]) << 8) | (0x00ff & input_data[1]);
         log_msg("\n Meta data has %x and %x\n",input_data[0], input_data[1]);
@@ -68,7 +68,7 @@ std::vector<std::pair<std::string, char>> decode_chunk(std::unordered_map<FUSE_E
 
 
         //clear the delimereter meta data to get the actual encoded number
-        meta_data &= 0x3F;
+        meta_data &= 0x3FFF;
         log_msg("\n Meta data is %d with delim %c\n",meta_data, delim);
 
 
@@ -76,25 +76,25 @@ std::vector<std::pair<std::string, char>> decode_chunk(std::unordered_map<FUSE_E
         std::string decoded_data;
         if(meta_data >= dec_table->size()){
             int expected_size = meta_data - dec_table->size();
-            log_msg("\n Expecting raw data of size %d\n",expected_size);
-            if(expected_size > input_data.size()){
+            log_msg("\n Expecting raw data of size %d with %d left on input string\n",expected_size, input_data.size());
+            if(expected_size+2 > input_data.size()){
                 log_msg("\n Not enough data for decoding there is %d left over\n",input_data.size());
                 break;
             }
 
-            int num_bytes = meta_data - dec_table->size();
-            decoded_data = input_data.substr(2, num_bytes);
-            input_data = input_data.substr(num_bytes + 2);
+            decoded_data = input_data.substr(2, expected_size);
+            input_data = input_data.substr(expected_size + 2);
 
         } else {
-            log_msg("\n Key found!\n");
+            log_msg("\n Key found! at %d with the result being %s \n",meta_data, dec_table->at(meta_data).c_str());
 
             decoded_data = dec_table->at(meta_data);
             input_data = input_data.substr(2);
         }
+        log_msg("Pushing back result\n");
         output_data.push_back(std::make_pair(decoded_data, delim));
     }
-
+    log_msg("Returning result\n");
     return output_data;
 
 

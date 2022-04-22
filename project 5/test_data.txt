@@ -1,0 +1,13 @@
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+REVOKE ALL ON SCHEMA core FROM PUBLIC;
+REVOKE ALL ON SCHEMA core FROM cms;
+GRANT ALL ON SCHEMA core TO cms;
+GRANT ALL ON SCHEMA core TO PUBLIC;
+ALTER TABLE ONLY security.user_authentication
+    ADD CONSTRAINT user_authentication_user_fkey FOREIGN KEY (user_eid) REFERENCES core."user"(entity_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY security.role_entitlement
+    ADD CONSTRAINT role_entitlement_target_eid_fkey FOREIGN KEY (target_eid) REFERENCES core.entity(entity_id);
+
