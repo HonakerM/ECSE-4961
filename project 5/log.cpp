@@ -45,10 +45,12 @@ FILE *log_open()
 
 void log_msg(const char *format, ...)
 {
+    #ifdef LOGGING
     va_list ap;
     va_start(ap, format);
 
     vfprintf(BB_DATA->logfile, format, ap);
+    #endif
 }
 
 // Report errors to logfile and give -errno to caller
