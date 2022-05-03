@@ -11,3 +11,8 @@ For information regarding the second project please see the project 3 [README.md
 
 # Project 4
 For information regarding the second project please see the project 4 [README.md](https://github.com/HonakerM/ECSE-4961/blob/main/project%204/README.md)
+
+
+# Project 5
+For information regarding the second project please see the project 5 [README.md](https://github.com/HonakerM/ECSE-4961/blob/main/project%205/README.md). FYI This project is licensed differently under a Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License. 
+
